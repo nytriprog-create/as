@@ -1,8 +1,4 @@
-<!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>As a Strike</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -248,9 +244,6 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
-</head>
-<body>
-
 
 <canvas id="gl" tabindex="-1"></canvas>
 
@@ -1764,7 +1757,7 @@ const World = {
         const n = C(cell.c + dc, cell.r + dr); if (!n) continue;
         let y0 = 0;
         if (n.wall) { if (n.wallH >= h) continue; y0 = n.wallH; }
-        else if (n.arch) { if (n.archTop >= h) continue; y0 = n.archTop; }
+        else if (n.arch) { vface(g, axis, k, a, b, n.floorH, ARCH_Y + 0.3, dir, { aoBase: n.floorH, dark: 0.55 }); if (n.archTop >= h) continue; y0 = n.archTop; }
         else y0 = n.floorH;
         const dark = n.arch ? 0.55 : 1;
         vface(g, axis, k, a, b, y0, h, dir, { aoBase: y0, dark, ao: !n.wall && !n.arch ? true : n.arch });
@@ -2161,10 +2154,10 @@ const FX = {
     this.light(_v1.set(pos.x, pos.y + 3, pos.z), 0xffa040, 220, 1.2, 70);
   },
   smoke(pos) {
-    const s = { x: pos.x, y: pos.y, z: pos.z, t: 0, dur: 18, r: 0 }; this.smokes.push(s); Sound.smokeHiss(pos);
-    for (let k = 0; k < 46; k++) {
-      const a = rand(0, TAU), d = rand(0.3, 3.4), h = rand(0.2, 2.6), delay = k / 46 * 1.6;
-      Game.after(delay, () => { if (!this.smokes.includes(s)) return; this.alpha.spawn({ x: pos.x, y: pos.y + 0.5, z: pos.z, vx: Math.cos(a) * d * 1.4, vy: h * 0.9, vz: Math.sin(a) * d * 1.4, drag: 1.4, size: 1.2, size1: rand(3.8, 5.2), life: rand(15.5, 17.5), frame: 0, r: rand(0.72, 0.82), g: rand(0.72, 0.8), b: rand(0.7, 0.78), alpha: 0.92, alpha1: 0.0, fadeIn: 0.4, rv: rand(-0.15, 0.15) }); });
+    const s = { x: pos.x, y: pos.y - 0.4, z: pos.z, t: 0, dur: 18, r: 0 }; this.smokes.push(s); Sound.smokeHiss(pos);
+    for (let k = 0; k < 64; k++) {
+      const a = rand(0, TAU), d = rand(0.3, 3.4), h = rand(0.1, 2.2), delay = k / 64 * 1.6;
+      Game.after(delay, () => { if (!this.smokes.includes(s)) return; this.alpha.spawn({ x: pos.x, y: pos.y + 0.15, z: pos.z, vx: Math.cos(a) * d * 1.4, vy: h * 0.55, vz: Math.sin(a) * d * 1.4, drag: 1.4, size: 1.4, size1: rand(4.2, 5.8), life: rand(15.5, 17.5), frame: 0, r: rand(0.72, 0.82), g: rand(0.72, 0.8), b: rand(0.7, 0.78), alpha: 1, alpha1: 0.0, fadeIn: 0.4, rv: rand(-0.15, 0.15) }); });
     }
   },
   smokeBlocks(a, b) {
@@ -2219,32 +2212,51 @@ function sprayPattern(seed, n, climb, sway) {
   }
   return out;
 }
-const WEAPONS = {
+// extra guns reuse a base model and recipe with their own stats
+function variants() {
+  const V = (base, id, o) => [id, Object.assign({}, BASE_GUNS[base], { id, model: base }, o)];
+  return Object.fromEntries([
+    V('p18', 'tec9', { name: 'Т-9', price: 500, dmg: 33, rate: 0.12, mag: 18, reserve: 90, armorPen: 0.9, kick: 1.4, spread: { base: 0.008, move: 0.05, air: 0.15, rec: 0.009, max: 0.06 } }),
+    V('k45', 'five', { name: 'Пятёрка', price: 500, dmg: 32, rate: 0.14, mag: 20, reserve: 100, armorPen: 0.91, kick: 1.2 }),
+    V('vp9', 'ump', { name: 'УМП-45', price: 1200, dmg: 35, rate: 0.09, mag: 25, reserve: 100, armorPen: 0.65, speed: 5.6, pattern: sprayPattern(13, 25, 0.7, 0.4) }),
+    V('vp9', 'p90', { name: 'П-90', price: 2350, dmg: 26, rate: 0.07, mag: 50, reserve: 100, armorPen: 0.69, speed: 5.7, pattern: sprayPattern(21, 50, 0.45, 0.3), reward: 300 }),
+    V('sg12', 'auto12', { name: 'Автодробовик', price: 2000, dmg: 20, pellets: 6, rate: 0.35, mag: 7, reserve: 32, kick: 2.2 }),
+    V('m4', 'm249', { name: 'Пулемёт М-249', slot: 1, team: undefined, kind: 'rifle', price: 5200, dmg: 32, rate: 0.08, mag: 100, reserve: 200, reload: 5.7, speed: 5.0, armorPen: 0.8, pattern: sprayPattern(77, 100, 0.55, 0.6), spread: { base: 0.006, move: 0.12, air: 0.25, rec: 0.0026, max: 0.045 }, reward: 300 }),
+    V('ak', 'galil', { name: 'Галил', price: 1800, dmg: 30, rate: 0.09, mag: 35, reserve: 90, armorPen: 0.775, pattern: sprayPattern(31, 35, 0.75, 0.5) }),
+    V('m4', 'famas', { name: 'Фамас', price: 2050, dmg: 30, rate: 0.09, mag: 25, reserve: 90, armorPen: 0.7, pattern: sprayPattern(52, 25, 0.7, 0.45) }),
+    V('awp', 'scout', { name: 'Скаут', price: 1700, dmg: 88, rate: 1.25, reserve: 90, speed: 5.6, armorPen: 0.85, kick: 1.6, scope: [40, 15], spread: { base: 0.0012, noscope: 0.04, move: 0.12, air: 0.06, rec: 0, max: 0 }, reward: 300 }),
+  ]);
+}
+const BASE_GUNS = {};
+Object.assign(BASE_GUNS, {
   knife: { id: 'knife', name: 'Нож', slot: 3, kind: 'knife', price: 0, dmg: 40, dmg2: 65, rate: 0.42, rate2: 1.0, range: 1.9, speed: 6.1, reward: 1500, draw: 0.5 },
-  p18: { id: 'p18', name: 'П-18', slot: 2, kind: 'pistol', team: 'T', price: 200, dmg: 28, armorPen: 0.47, rangeMod: 0.88, rate: 0.15, mag: 20, reserve: 120, reload: 2.2, draw: 0.55, speed: 5.9, spread: { base: 0.0065, move: 0.045, air: 0.14, rec: 0.007, max: 0.05 }, kick: 1.5, sound: 'pistol', reward: 300, pen: 0.6, vmPos: [0.135, -0.15, -0.46], muzzle: [0, 0.045, -0.165] },
-  k45: { id: 'k45', name: 'К-45', slot: 2, kind: 'pistol', team: 'CT', price: 200, dmg: 35, armorPen: 0.5, rangeMod: 0.91, rate: 0.17, mag: 12, reserve: 72, reload: 2.2, draw: 0.55, speed: 5.9, spread: { base: 0.0055, move: 0.04, air: 0.14, rec: 0.008, max: 0.05 }, kick: 1.8, sound: 'pistolCT', reward: 300, pen: 0.7, vmPos: [0.135, -0.15, -0.46], muzzle: [0, 0.045, -0.18] },
-  deagle: { id: 'deagle', name: 'Орёл .50', slot: 2, kind: 'pistol', price: 700, dmg: 63, armorPen: 0.93, rangeMod: 0.81, rate: 0.24, mag: 7, reserve: 35, reload: 2.2, draw: 0.6, speed: 5.8, spread: { base: 0.008, move: 0.09, air: 0.2, rec: 0.02, max: 0.08 }, kick: 4.6, sound: 'deagle', reward: 300, pen: 1.3, vmPos: [0.135, -0.155, -0.48], muzzle: [0, 0.05, -0.23] },
+  p18: { id: 'p18', name: 'П-18', slot: 2, kind: 'pistol', team: 'T', price: 200, dmg: 28, armorPen: 0.47, rangeMod: 0.88, rate: 0.15, mag: 20, reserve: 120, reload: 2.2, draw: 0.55, speed: 5.9, spread: { base: 0.0065, move: 0.045, air: 0.14, rec: 0.007, max: 0.05 }, kick: 1.1, sound: 'pistol', reward: 300, pen: 0.6, vmPos: [0.135, -0.15, -0.46], muzzle: [0, 0.045, -0.165] },
+  k45: { id: 'k45', name: 'К-45', slot: 2, kind: 'pistol', team: 'CT', price: 200, dmg: 35, armorPen: 0.5, rangeMod: 0.91, rate: 0.17, mag: 12, reserve: 72, reload: 2.2, draw: 0.55, speed: 5.9, spread: { base: 0.0055, move: 0.04, air: 0.14, rec: 0.008, max: 0.05 }, kick: 1.3, sound: 'pistolCT', reward: 300, pen: 0.7, vmPos: [0.135, -0.15, -0.46], muzzle: [0, 0.045, -0.18] },
+  deagle: { id: 'deagle', name: 'Орёл .50', slot: 2, kind: 'pistol', price: 700, dmg: 63, armorPen: 0.93, rangeMod: 0.81, rate: 0.24, mag: 7, reserve: 35, reload: 2.2, draw: 0.6, speed: 5.8, spread: { base: 0.008, move: 0.09, air: 0.2, rec: 0.02, max: 0.08 }, kick: 2.8, sound: 'deagle', reward: 300, pen: 1.3, vmPos: [0.135, -0.155, -0.48], muzzle: [0, 0.05, -0.23] },
   vp9: { id: 'vp9', name: 'ВП-9', slot: 1, kind: 'smg', price: 1250, dmg: 26, armorPen: 0.62, rangeMod: 0.84, rate: 0.075, auto: true, mag: 30, reserve: 120, reload: 2.6, draw: 0.8, speed: 5.75, spread: { base: 0.009, move: 0.028, air: 0.15, rec: 0.0022, max: 0.04 }, pattern: sprayPattern(9, 30, 0.55, 0.35), sound: 'smg', reward: 600, pen: 0.8, vmPos: [0.16, -0.18, -0.41], muzzle: [0, 0.03, -0.37] },
-  sg12: { id: 'sg12', name: 'Дробовик 12', slot: 1, kind: 'shotgun', price: 1100, dmg: 25, pellets: 9, armorPen: 0.5, rangeMod: 0.5, rate: 0.88, mag: 8, reserve: 32, shellTime: 0.48, draw: 0.8, speed: 5.5, spread: { base: 0.05, move: 0.02, air: 0.1, rec: 0, max: 0.06 }, kick: 5, sound: 'shotgun', reward: 900, pen: 0.4, vmPos: [0.165, -0.19, -0.42], muzzle: [0, 0.05, -0.64] },
+  sg12: { id: 'sg12', name: 'Дробовик 12', slot: 1, kind: 'shotgun', price: 1100, dmg: 25, pellets: 9, armorPen: 0.5, rangeMod: 0.5, rate: 0.88, mag: 8, reserve: 32, shellTime: 0.48, draw: 0.8, speed: 5.5, spread: { base: 0.05, move: 0.02, air: 0.1, rec: 0, max: 0.06 }, kick: 2.6, sound: 'shotgun', reward: 900, pen: 0.4, vmPos: [0.165, -0.19, -0.42], muzzle: [0, 0.05, -0.64] },
   ak: { id: 'ak', name: 'АК-47', slot: 1, kind: 'rifle', team: 'T', price: 2700, dmg: 36, armorPen: 0.775, rangeMod: 0.98, rate: 0.1, auto: true, mag: 30, reserve: 90, reload: 2.45, draw: 0.9, speed: 5.4, spread: { base: 0.0032, move: 0.09, air: 0.22, rec: 0.0024, max: 0.035 }, pattern: sprayPattern(47, 30, 1.0, 0.55), sound: 'ak', reward: 300, pen: 1.6, vmPos: [0.165, -0.19, -0.44], muzzle: [0, 0.035, -0.69] },
   m4: { id: 'm4', name: 'М4А1', slot: 1, kind: 'rifle', team: 'CT', price: 3100, dmg: 33, armorPen: 0.7, rangeMod: 0.97, rate: 0.09, auto: true, mag: 30, reserve: 90, reload: 3.0, draw: 0.9, speed: 5.5, spread: { base: 0.0027, move: 0.085, air: 0.22, rec: 0.0021, max: 0.03 }, pattern: sprayPattern(4, 30, 0.82, 0.42), sound: 'm4', reward: 300, pen: 1.5, vmPos: [0.165, -0.19, -0.43], muzzle: [0, 0.035, -0.6] },
-  awp: { id: 'awp', name: 'AW-338', slot: 1, kind: 'sniper', price: 4750, dmg: 115, armorPen: 0.975, rangeMod: 0.99, rate: 1.46, mag: 10, reserve: 30, reload: 3.6, draw: 1.1, speed: 4.8, scope: [40, 14], spread: { base: 0.0012, noscope: 0.07, move: 0.18, air: 0.3, rec: 0, max: 0 }, kick: 6, sound: 'awp', reward: 100, pen: 2.6, vmPos: [0.175, -0.215, -0.5], muzzle: [0, 0.035, -0.88] },
+  awp: { id: 'awp', name: 'AW-338', slot: 1, kind: 'sniper', price: 4750, dmg: 115, armorPen: 0.975, rangeMod: 0.99, rate: 1.46, mag: 10, reserve: 30, reload: 3.6, draw: 1.1, speed: 4.8, scope: [40, 14], spread: { base: 0.0012, noscope: 0.07, move: 0.18, air: 0.3, rec: 0, max: 0 }, kick: 2.4, sound: 'awp', reward: 100, pen: 2.6, vmPos: [0.175, -0.215, -0.5], muzzle: [0, 0.035, -0.88] },
+});
+const WEAPONS = { ...BASE_GUNS,
+  ...variants(),
   he: { id: 'he', name: 'Осколочная', slot: 4, kind: 'grenade', nade: 'he', price: 300, speed: 6.0, draw: 0.5, reward: 300 },
   smoke: { id: 'smoke', name: 'Дымовая', slot: 4, kind: 'grenade', nade: 'smoke', price: 300, speed: 6.0, draw: 0.5, reward: 300 },
   flash: { id: 'flash', name: 'Световая', slot: 4, kind: 'grenade', nade: 'flash', price: 200, speed: 6.0, draw: 0.5, reward: 300 },
   c4: { id: 'c4', name: 'C4', slot: 5, kind: 'bomb', speed: 6.0, draw: 0.6 },
 };
 const BUY_MENU = [
-  { name: 'Пистолеты', items: ['p18', 'k45', 'deagle'] },
-  { name: 'Дробовики', items: ['sg12'] },
-  { name: 'Пистолеты-пулемёты', items: ['vp9'] },
-  { name: 'Винтовки', items: ['ak', 'm4', 'awp'] },
+  { name: 'Пистолеты', items: ['p18', 'k45', 'tec9', 'five', 'deagle'] },
+  { name: 'Тяжёлое', items: ['sg12', 'auto12', 'm249'] },
+  { name: 'Пистолеты-пулемёты', items: ['vp9', 'ump', 'p90'] },
+  { name: 'Винтовки', items: ['galil', 'famas', 'ak', 'm4', 'scout', 'awp'] },
   { name: 'Снаряжение', items: ['vest', 'vesthelm', 'kit'] },
   { name: 'Гранаты', items: ['flash', 'smoke', 'he'] },
 ];
 const GEAR = { vest: { name: 'Бронежилет', price: 650 }, vesthelm: { name: 'Бронежилет + шлем', price: 1000 }, kit: { name: 'Набор сапёра', price: 400, team: 'CT' } };
 const STAT_BARS = {
-  p18: [28, 70, 55], k45: [35, 60, 65], deagle: [63, 40, 50], vp9: [26, 85, 45], sg12: [100, 25, 15], ak: [36, 72, 70], m4: [33, 76, 76], awp: [115, 12, 98],
+  p18: [28, 70, 55], k45: [35, 60, 65], tec9: [33, 78, 45], five: [32, 72, 62], ump: [35, 72, 50], p90: [26, 92, 48], auto12: [80, 55, 12], m249: [32, 82, 35], galil: [30, 78, 62], famas: [30, 78, 68], scout: [88, 18, 92], deagle: [63, 40, 50], vp9: [26, 85, 45], sg12: [100, 25, 15], ak: [36, 72, 70], m4: [33, 76, 76], awp: [115, 12, 98],
 };
 
 // ------------------------------------------------------------ model building helpers
@@ -2433,7 +2445,7 @@ const HANDS = { // [right hand, left hand] in weapon space (null = hidden)
 };
 function buildWeaponModel(id) {
   if (!MAT.smokeCan) { MAT.smokeCan = new THREE.MeshStandardMaterial({ color: 0x55604f, roughness: 0.55, metalness: 0.5 }); MAT.flashCan = new THREE.MeshStandardMaterial({ color: 0x9aa3a8, roughness: 0.4, metalness: 0.7 }); }
-  const g = new THREE.Group(), P = {}; (MODEL_BUILDERS[id] || MODEL_BUILDERS.knife)(g, P);
+  const g = new THREE.Group(), P = {}; (MODEL_BUILDERS[(WEAPONS[id] && WEAPONS[id].model) || id] || MODEL_BUILDERS.knife)(g, P);
   const d = WEAPONS[id]; P.muzzle = new THREE.Object3D(); P.muzzle.position.fromArray(d && d.muzzle ? d.muzzle : [0, 0, -0.3]); g.add(P.muzzle);
   for (const k of ['mag', 'slide', 'bolt', 'pump', 'blade']) if (P[k]) P[k].userData.base = P[k].position.clone();
   return { group: g, parts: P };
@@ -2488,11 +2500,11 @@ const VM = {
   },
   get(id, team) {
     const key = id + team; if (this.models[key]) return this.models[key];
-    const m = buildWeaponModel(id), g = m.group, hands = HANDS[id] || [null, null];
+    const m = buildWeaponModel(id), g = m.group, hands = HANDS[(WEAPONS[id] && WEAPONS[id].model) || id] || [null, null];
     m.group.traverse((o) => { o.castShadow = false; });
     if (hands[0]) { const at = V3(...hands[0]); m.parts.rHand = buildHand(g, at, 1, team); armSegment(g, V3(at.x + 0.008, at.y - 0.004, at.z + 0.08), V3(at.x + 0.13, at.y - 0.2, at.z + 0.45), MAT['camo' + team], 0.03, 0.04); }
     if (hands[1]) {
-      const at = V3(...hands[1]), host = id === 'sg12' ? m.parts.pump : g; m.parts.lHand = buildHand(host, at, -1, team); m.parts.lHand.rotation.set(id.match(/p18|k45|deagle/) ? 0.4 : 0, 0, id.match(/p18|k45|deagle/) ? 0.3 : -0.25);
+      const mk = (WEAPONS[id] && WEAPONS[id].model) || id, pist = /p18|k45|deagle/.test(mk), at = V3(...hands[1]), host = mk === 'sg12' ? m.parts.pump : g; m.parts.lHand = buildHand(host, at, -1, team); m.parts.lHand.rotation.set(pist ? 0.4 : 0, 0, pist ? 0.3 : -0.25);
       armSegment(host, V3(at.x - 0.008, at.y - 0.012, at.z + 0.07), V3(at.x - 0.12, at.y - 0.3, at.z + 0.3), MAT['camo' + team], 0.028, 0.038);
     }
     const d = WEAPONS[id]; g.userData.base = V3(...((d && d.vmPos) || [0.13, -0.135, -0.3]));
@@ -2507,7 +2519,7 @@ const VM = {
     const P = this.cur.parts; for (const k of ['mag', 'slide', 'bolt', 'pump', 'blade']) if (P[k]) { P[k].position.copy(P[k].userData.base); P[k].rotation.x = P[k].rotation.x; }
     if (P.pin) P.pin.visible = true; this.cur.group.visible = true;
   },
-  fire(kick) { this.kickVZ += 0.9 * kick; this.kickVP += 2.2 * kick; this.flashT = 0.045; this.flash.rotation.z = rand(0, TAU); const s = rand(0.12, 0.18) * (this.curId === 'awp' || this.curId === 'sg12' ? 1.5 : this.curId.match(/p18|k45/) ? 0.7 : 1); this.flash.scale.set(s, s, s); },
+  fire(kick) { this.kickVZ += 0.9 * kick; this.kickVP += 2.2 * kick; this.flashT = 0.045; this.flash.rotation.z = rand(0, TAU); const s = rand(0.12, 0.18) * (/awp|sg12|scout|auto12/.test(this.curId) ? 1.5 : /p18|k45|tec9|five/.test(this.curId) ? 0.7 : 1); this.flash.scale.set(s, s, s); },
   update(dt, pl) {
     if (!this.cur) return;
     const g = this.cur.group, P = this.cur.parts, w = pl.weapon, def = w ? w.def : null, base = g.userData.base, now = Game.time;
@@ -2655,13 +2667,14 @@ class CharModel {
     while (this.weaponGroup.children.length) this.weaponGroup.remove(this.weaponGroup.children[0]);
     if (!id) { this.muzzle = null; this.poseArms(null); return; }
     const m = worldWeaponModel(id), kind = WEAPONS[id].kind; this.weaponGroup.add(m);
+    if (this.ghosted) m.traverse((o) => { if (o.isMesh) { o.userData.mat = o.material; o.material = MAT.ghost; } });
     const hold = WEAPON_HOLD[kind] || WEAPON_HOLD.rifle; this.weaponGroup.position.set(hold[0], hold[1], hold[2]);
     this.weaponGroup.rotation.set(kind === 'knife' ? -0.6 : 0, 0, 0);
     this.muzzle = new THREE.Object3D(); this.muzzle.position.fromArray(WEAPONS[id].muzzle || [0, 0, -0.3]); m.add(this.muzzle);
     this.poseArms(id);
   }
   poseArms(id) {
-    const hands = id ? HANDS[id] : null, wp = this.weaponGroup.position;
+    const hands = id ? HANDS[WEAPONS[id].model || id] : null, wp = this.weaponGroup.position;
     for (const A of this.arms) {
       let target;
       const h = hands ? (A.s > 0 ? hands[0] : hands[1]) : null;
@@ -2849,7 +2862,7 @@ function moveActor(a, wx, wz, jump, dt) {
   // crouch transitions (cannot stand up under a ceiling)
   const wantC = a.crouching ? 1 : 0;
   if (wantC < a.crouchAmt && !canStand(a.pos.x, a.pos.y, a.pos.z, 1.8)) { /* stay crouched */ }
-  else a.crouchAmt = clamp(a.crouchAmt + (wantC - a.crouchAmt > 0 ? 1 : -1) * dt * 7, 0, 1);
+  else { const dc = wantC - a.crouchAmt; if (Math.abs(dc) > 1e-4) a.crouchAmt = clamp(a.crouchAmt + Math.sign(dc) * Math.min(Math.abs(dc), dt * 7), 0, 1); }
   const wl = Math.hypot(wx, wz); if (wl > 1e-6) { wx /= wl; wz /= wl; }
   if (a.onGround) {
     if (jump && Game.phase !== 'freeze' && !a.planting && !a.defusing) {
@@ -2964,10 +2977,11 @@ function tryAttack(a, heavy = false) {
   w.ammo--; w.lastShot = now; w.nextFire = now + d.rate; w.pumpSound = false; w.boltSound = false; w.inspectT = 0;
   const inacc = inaccuracy(a, w);
   const idx = Math.floor(a.shotIdx);
+  const yaw = a.yaw + a.recY, pitch = a.pitch + a.recP;
   if (d.pattern) { const p = d.pattern[Math.min(idx, d.pattern.length - 1)], q = idx > 0 ? d.pattern[Math.min(idx - 1, d.pattern.length - 1)] : [0, 0]; a.recP += (p[1] - q[1]) * DEG; a.recY += (p[0] - q[0]) * DEG; }
   else { const k = d.kick || 1; a.recP += k * DEG * rand(0.75, 1.15); a.recY += rand(-0.35, 0.35) * k * DEG; }
   a.shotIdx = idx + 1; a.lastShotT = now;
-  a.eye(_eye); const pellets = d.pellets || 1, yaw = a.yaw + a.recY, pitch = a.pitch + a.recP;
+  a.eye(_eye); const pellets = d.pellets || 1;
   let endP = null;
   for (let k = 0; k < pellets; k++) {
     const r = inacc * (pellets > 1 ? Math.sqrt(Math.random()) : Math.random()), th = Math.random() * TAU;
@@ -3561,10 +3575,12 @@ function botBuy(a) {
   const buy = (id) => Game.buy(a, id, true);
   if (a.slots[1] && a.slots[1].def.kind !== 'smg') { /* keep the gun */ }
   else if (m() >= 4750 + 1000 && Math.random() < 0.18 && !Game.actors.some((x) => x !== a && x.team === a.team && x.slots[1] && x.slots[1].id === 'awp')) buy('awp');
-  else if (m() >= rp + 650) buy(rifle);
-  else if (m() >= 1250 + 650 && Math.random() < 0.6) buy('vp9');
+  else if (m() >= rp + 650) buy(Math.random() < 0.12 && m() >= 5200 + 650 ? 'm249' : rifle);
+  else if (m() >= 2050 + 650 && Math.random() < 0.6) buy(T ? 'galil' : 'famas');
+  else if (m() >= 1700 + 650 && Math.random() < 0.25) buy('scout');
+  else if (m() >= 1250 + 650 && Math.random() < 0.6) buy(choice(['vp9', 'ump', 'vp9']));
   else if (m() >= 1100 + 650 && Math.random() < 0.5) buy('sg12');
-  else if (m() >= 1500 && Math.random() < 0.4 && (!a.slots[2] || a.slots[2].id !== 'deagle')) buy('deagle');
+  else if (m() >= 1500 && Math.random() < 0.4 && (!a.slots[2] || a.slots[2].id !== 'deagle')) buy(Math.random() < 0.5 ? 'deagle' : (T ? 'tec9' : 'five'));
   if (m() >= 1000 && a.armor < 50) buy('vesthelm'); else if (m() >= 650 && a.armor < 50) buy('vest');
   if (!T && m() >= 400 && Math.random() < 0.5) buy('kit');
   if (m() >= 300 && Math.random() < 0.6) buy('he');
@@ -3671,7 +3687,7 @@ const Game = {
     const lookOK = Input.locked || Input.fallback;
     if (p.alive) {
       if (lookOK && !UI.cursorWanted()) {
-        const zk = p.scoped ? WEAPONS.awp.scope[p.zoom - 1] / Settings.fov : 1, s = Settings.sens * 0.0011 * zk;
+        const zk = p.scoped ? (p.weapon.def.scope || WEAPONS.awp.scope)[p.zoom - 1] / Settings.fov : 1, s = Settings.sens * 0.0011 * zk;
         p.yaw = angNorm(p.yaw - Input.dx * s); p.pitch = clamp(p.pitch - Input.dy * s * (Settings.invertY ? -1 : 1), -1.54, 1.54);
       }
       let f = 0, r = 0; const typing = UI.cursorWanted() && !UI.buyOpen;
@@ -3735,8 +3751,8 @@ const Game = {
     const shake = FX.shake * FX.shake;
     if (t === p && p.alive) {
       p.eye(camera.position);
-      camera.rotation.set(p.pitch + p.recP * 0.5 + rand(-1, 1) * shake * 0.03, p.yaw + p.recY * 0.5 + rand(-1, 1) * shake * 0.03, 0);
-      const fov = p.scoped ? WEAPONS.awp.scope[p.zoom - 1] : Settings.fov;
+      camera.rotation.set(p.pitch + p.recP + rand(-1, 1) * shake * 0.03, p.yaw + p.recY + rand(-1, 1) * shake * 0.03, 0);
+      const fov = p.scoped ? (p.weapon.def.scope || WEAPONS.awp.scope)[p.zoom - 1] : Settings.fov;
       const vf = vfovFor(fov); if (Math.abs(camera.fov - vf) > 0.01) { camera.fov = p.scoped ? vf : damp(camera.fov, vf, 20, dt); camera.updateProjectionMatrix(); }
     } else if (t) {
       const e = t.eye(_v1), f = dirFromAngles(t.yaw, Math.max(-0.5, Math.min(0.4, t.pitch)) - 0.18, _v2);
@@ -4313,5 +4329,5 @@ function render() {
 window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, get camera() { return camera; }, get renderer() { return renderer; } };
 boot();
 </script>
-</body>
-</html>
+
+</body></html>
