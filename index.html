@@ -265,6 +265,7 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
 .skin-opts button i{width:14px;height:14px;display:block;border:1px solid rgba(255,255,255,.3)}
 .skin-opts button.on{border-color:var(--signal);color:var(--signal2)}
 .skin-opts button.lock{opacity:.4;cursor:not-allowed}
+#zoneFx{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;box-shadow:inset 0 0 160px 40px rgba(60,120,255,.55);background:rgba(40,90,220,.08)}
 #trainStats{position:absolute;left:20px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);padding:10px 14px;font-size:14px;line-height:1.7;font-weight:600;min-width:190px}
 #trainStats b{color:var(--sand);font-size:12px;letter-spacing:.18em;display:block}
 #killcam{position:absolute;inset:0;border:4px solid rgba(240,74,59,.7);pointer-events:none}
@@ -308,7 +309,7 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
     <h2>Новый матч</h2>
     <p class="sub">Выберите режим, карту и сторону.</p>
     <h3>Режим</h3>
-    <div class="seg" id="segMode"><button data-v="bomb" class="on">Закладка бомбы</button><button data-v="dm">Бой насмерть</button><button data-v="train">Тренировка</button></div>
+    <div class="seg" id="segMode"><button data-v="bomb" class="on">Закладка бомбы</button><button data-v="dm">Бой насмерть</button><button data-v="br">Королевская битва</button><button data-v="train">Тренировка</button></div>
     <p class="sub" id="modeNote" style="margin:8px 0 0">Раунды, экономика, бомба C4.</p>
     <h3>Сторона</h3>
     <div class="side-pick" id="sidePick">
@@ -317,11 +318,15 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
       <button class="side auto on" data-side="auto"><b>Случайно</b><span>сторону выберет жребий</span></button>
     </div>
     <div class="row2">
-      <div><h3>Игроков в команде</h3><div class="seg" id="segSize"><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5" class="on">5</button></div></div>
+      <div><h3 id="sizeTitle">Игроков в команде</h3><div class="seg" id="segSize"><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5" class="on">5</button></div></div>
       <div><h3 id="lenTitle">Длина матча</h3><div class="seg" id="segLen"><button data-v="3">до 3</button><button data-v="5" class="on">до 5</button><button data-v="8">до 8</button></div></div>
     </div>
     <h3>Сложность ботов</h3>
     <div class="seg" id="segDiff"><button data-v="0">Новичок</button><button data-v="1" class="on">Боец</button><button data-v="2">Ветеран</button><button data-v="3">Профи</button></div>
+    <div class="row2">
+      <div><h3>Время суток</h3><div class="seg" id="segTod"><button data-v="day" class="on">День</button><button data-v="dusk">Закат</button><button data-v="night">Ночь</button><button data-v="cycle">Смена</button></div></div>
+      <div><h3>Погода</h3><div class="seg" id="segWeather"><button data-v="clear" class="on">Ясно</button><button data-v="storm">Буря</button><button data-v="random">Случайно</button></div></div>
+    </div>
     <h3>Карта</h3>
     <div class="map-pick" id="mapPick">
       <button class="mapc on" data-map="dune"><canvas id="mp_dune" width="200" height="200"></canvas><b>de_dune</b><span>Пустынный городок</span></button>
@@ -351,9 +356,11 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
       <span><kbd>Space</kbd></span><span>прыжок</span>
       <span><kbd>Ctrl</kbd> / <kbd>C</kbd></span><span>присесть (точнее стрельба)</span>
       <span><kbd>Shift</kbd></span><span>тихий шаг — враги не слышат</span>
-      <span><kbd>1</kbd>–<kbd>5</kbd> <kbd>Q</kbd> <kbd>колесо</kbd></span><span>оружие, последнее оружие</span>
+      <span><kbd>1</kbd>–<kbd>6</kbd> <kbd>Q</kbd> <kbd>колесо</kbd></span><span>оружие (6 — тазер), последнее оружие</span>
       <span><kbd>R</kbd></span><span>перезарядка</span>
-      <span><kbd>E</kbd></span><span>заложить / обезвредить бомбу, подобрать оружие</span>
+      <span><kbd>E</kbd></span><span>заложить / обезвредить бомбу, подобрать оружие, прицепиться к тросу</span>
+      <span><kbd>L</kbd></span><span>фонарик</span>
+      <span><kbd>W</kbd> у лестницы</span><span>залезть на крышу</span>
       <span><kbd>G</kbd></span><span>выбросить оружие</span>
       <span><kbd>B</kbd></span><span>магазин (в зоне закупки)</span>
       <span><kbd>F</kbd></span><span>осмотреть оружие</span>
@@ -399,6 +406,7 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
   <div id="killer" class="hidden"><small>Вас убил</small><b id="kName">—</b><span id="kInfo"></span></div>
   <div id="flash"></div>
   <div id="trainStats" class="hidden"></div>
+  <div id="zoneFx"></div>
   <div id="killcam" class="hidden"><b>ПОВТОР</b><span id="kcName"></span></div>
   <div id="fps"></div>
 </div>
@@ -1651,6 +1659,9 @@ const MAPS = {
     signs: [['A', 35, 1, 1], ['B', 8, 1, 1]], cables: [[[20, 14], [24, 14]], [[20, 18], [24, 20]], [[20, 25], [24, 27]], [[36, 18], [42, 19]], [[36, 27], [42, 25]], [[18, 30], [26, 30]], [[5, 26], [8, 27]]],
     menuPath: [[-1, 3.2, 35], [0, 3.4, 26], [0, 3.6, 10], [0, 3.6, -8], [10, 4.4, -12], [18, 4.2, -17], [27, 3.8, -28], [35, 3.6, -14], [34, 3.4, 6], [34, 2.6, 19], [34, 1.95, 26], [33, 2.8, 32], [20, 3.2, 35], [8, 3.2, 37]],
     train: { player: [38.5, 33, 0], area: [36, 41, 14, 28] },
+    ladders: [[20, 9, 'n'], [16, 36, 'n'], [33, 13, 's'], [3, 13, 's'], [18, 31, 'w']],
+    zips: [[[10, 16], [14.5, 4]], [[33, 16], [28.5, 8]], [[27, 30], [16, 30]], [[14, 35], [27, 35]]],
+    roofDeco: [[10, 18, 'tank'], [12, 15, 'cover'], [14.5, 7, 'ac'], [32, 17, 'cover'], [29, 9.5, 'ac'], [28, 31, 'tank'], [16, 33, 'ac'], [26, 35.5, 'cover'], [21.5, 11, 'ac']],
     theme: {}, sky: { zen: [0.11, 0.29, 0.66], hor: [0.78, 0.77, 0.72], gnd: [0.70, 0.62, 0.50], cloud: 0.52, fog: 0xd9cdb4, fogNear: 70, fogFar: 520, sun: 0xfff0d8, sunI: 3.1, hemiSky: 0xc4d8f5, hemiGnd: 0x9a7f5e, hemiI: 1.05, envGnd: 0x8a7556 },
   },
   frost: {
@@ -1661,6 +1672,9 @@ const MAPS = {
     signs: [['A', 22, 2, 1], ['B', 22, 41, -1]], cables: [[[15, 18], [15.3, 25]], [[26, 18], [26, 25]], [[32, 18], [31, 25]], [[4, 26], [6, 27]]],
     menuPath: [[-33, 3.4, -1], [-20, 3.6, -5], [-4, 3.6, -5], [0, 3.8, -12], [0, 4, -27], [13, 3.8, -29], [24, 3.6, -26], [32, 3.6, -14], [33, 3.6, 0], [32, 3.6, 16], [20, 3.6, 25], [4, 3.6, 30], [-18, 1.9, 30], [-25, 1.9, 30], [-35, 3.2, 22], [-35, 3.4, 10]],
     train: { player: [10, 21.5, -Math.PI / 2], area: [14, 33, 19, 24] },
+    ladders: [[18, 20, 's'], [6, 12, 'e'], [6, 28, 'e'], [36, 14, 'w']],
+    zips: [[[11, 14], [19, 21.5]], [[25, 21.5], [30, 14]], [[13, 27], [22, 22]], [[30, 27], [31, 15]]],
+    roofDeco: [[20.5, 22, 'ac'], [24, 21, 'tank'], [10, 15, 'cover'], [12, 13, 'ac'], [32, 16, 'tank'], [14, 28.5, 'ac'], [29, 28.5, 'cover']],
     theme: { sand: 'snow', sandstone: 'concrete', stoneDark: 'concreteDark', plaster: 'plasterCold', plaster2: 'plasterCold', tiles: 'tilesCold', tilesDark: 'concreteDark', sandFar: 'snowFar' },
     sky: { zen: [0.34, 0.41, 0.52], hor: [0.82, 0.85, 0.88], gnd: [0.85, 0.87, 0.9], cloud: 0.38, fog: 0xc9d1da, fogNear: 45, fogFar: 300, sun: 0xdfe8ff, sunI: 1.9, hemiSky: 0xdde7f5, hemiGnd: 0xb9c2cc, hemiI: 1.45, envGnd: 0xd8dee6 },
   },
@@ -1954,6 +1968,7 @@ const World = {
     this.addCables();
     this.addSurroundings();
     if (MAP.secret && this.addSecretRoom) this.addSecretRoom();
+    this.addExtras();
     this.addBounds();
     // ---- meshes
     for (const [name, g] of Object.entries(GBS)) {
@@ -1980,9 +1995,10 @@ const World = {
     if (hash2(Math.round(mid * 10), Math.round(k * 10)) > 0.35) this.addAwning(axis, k, mid, dir, y + 2.95, 2.3);
   },
   addWindow(axis, k, mid, dir, y0) {
-    const g = gb('window'), w = 1.15, y = y0 + 1.55, h = 1.15, off = dir * 0.035;
+    const g = new GB(), w = 1.15, y = y0 + 1.55, h = 1.15, off = dir * 0.035;
     if (axis === 'x') { const z = k + off; const [a, b] = dir > 0 ? [mid - w / 2, mid + w / 2] : [mid + w / 2, mid - w / 2]; g.quad([a, y, z], [b, y, z], [b, y + h, z], [a, y + h, z], [0, 0, dir], [[0, 0], [1, 0], [1, 1], [0, 1]], [1, 1, 1, 1]); }
     else { const x = k + off; const [a, b] = dir > 0 ? [mid + w / 2, mid - w / 2] : [mid - w / 2, mid + w / 2]; g.quad([x, y, a], [x, y, b], [x, y + h, b], [x, y + h, a], [dir, 0, 0], [[0, 0], [1, 0], [1, 1], [0, 1]], [1, 1, 1, 1]); }
+    const wm = new THREE.Mesh(g.build(), MAT.window); wm.receiveShadow = true; this.group.add(wm); this.windows.push({ mesh: wm, axis, k, mid, y0: y, y1: y + h, w, dir });
     const sg = gb('stoneDark'), o = (d) => k + dir * d;
     if (axis === 'x') boxGeo(sg, mid - w / 2 - 0.15, y - 0.12, Math.min(o(0), o(0.16)), mid + w / 2 + 0.15, y, Math.max(o(0), o(0.16)), { world: true, col: 0.85 });
     else boxGeo(sg, Math.min(o(0), o(0.16)), y - 0.12, mid - w / 2 - 0.15, Math.max(o(0), o(0.16)), y, mid + w / 2 + 0.15, { world: true, col: 0.85 });
@@ -1996,15 +2012,14 @@ const World = {
   addProp(cell, x, z) {
     const R = mulberry32(cell.c * 131 + cell.r * 17), jx = (R() - 0.5) * 0.25, jz = (R() - 0.5) * 0.25, rot = R() < 0.5 ? 0 : Math.PI / 2;
     const ch = cell.prop;
-    if (ch === 'c') { const s = 1.3; boxGeo(gb('crate'), x + jx - s / 2, 0, z + jz - s / 2, x + jx + s / 2, s, z + jz + s / 2, { rotY: rot }); this.addSolid(x + jx - s / 2, 0, z + jz - s / 2, x + jx + s / 2, s, z + jz + s / 2, 'wood', 1); }
+    if (ch === 'c') { const s = 1.3; this.breakable(cell, 'wood', 110, [{ b: [x + jx - s / 2, 0, z + jz - s / 2, x + jx + s / 2, s, z + jz + s / 2], rotY: rot, mat: 'crate' }]); }
     else if (ch === 'C') {
-      const s = 1.45, s2 = 1.05; boxGeo(gb('crate'), x - s / 2, 0, z - s / 2, x + s / 2, s, z + s / 2, { rotY: rot }); this.addSolid(x - s / 2, 0, z - s / 2, x + s / 2, s, z + s / 2, 'wood', 1);
-      const ox = (R() - 0.5) * 0.3, oz = (R() - 0.5) * 0.3; boxGeo(gb('crate'), x + ox - s2 / 2, s, z + oz - s2 / 2, x + ox + s2 / 2, s + s2, z + oz + s2 / 2, { rotY: rot + Math.PI / 2 }); this.addSolid(x + ox - s2 / 2, s, z + oz - s2 / 2, x + ox + s2 / 2, s + s2, z + oz + s2 / 2, 'wood', 1);
+      const s = 1.45, s2 = 1.05, ox = (R() - 0.5) * 0.3, oz = (R() - 0.5) * 0.3;
+      this.breakable(cell, 'wood', 200, [{ b: [x - s / 2, 0, z - s / 2, x + s / 2, s, z + s / 2], rotY: rot, mat: 'crate' }, { b: [x + ox - s2 / 2, s, z + oz - s2 / 2, x + ox + s2 / 2, s + s2, z + oz + s2 / 2], rotY: rot + Math.PI / 2, mat: 'crate' }]);
     } else if (ch === 'x') {
       const along = (this.cell(cell.c + 1, cell.r)?.walk || this.cell(cell.c - 1, cell.r)?.walk) ? 'x' : 'z', L = 1.8, Wd = 0.95, Hh = 0.9;
       const [hx, hz] = along === 'x' ? [L / 2, Wd / 2] : [Wd / 2, L / 2];
-      boxGeo(gb('crateMil'), x - hx, 0, z - hz, x + hx, Hh, z + hz); this.addSolid(x - hx, 0, z - hz, x + hx, Hh, z + hz, 'wood', 1);
-      boxGeo(gb('crateMil'), x - hx * 0.9 + 0.1, Hh, z - hz * 0.9, x + hx * 0.9 - 0.1, Hh + 0.55, z + hz * 0.9, { rotY: 0 }); this.addSolid(x - hx * 0.9 + 0.1, Hh, z - hz * 0.9, x + hx * 0.9 - 0.1, Hh + 0.55, z + hz * 0.9, 'wood', 1);
+      this.breakable(cell, 'wood', 170, [{ b: [x - hx, 0, z - hz, x + hx, Hh, z + hz], mat: 'crateMil' }, { b: [x - hx * 0.9 + 0.1, Hh, z - hz * 0.9, x + hx * 0.9 - 0.1, Hh + 0.55, z + hz * 0.9], mat: 'crateMil' }]);
     } else if (ch === 'X') {
       const s = 1.9, H = 2.6, mat = R() < 0.5 ? 'metalRed' : 'metalBlue';
       boxGeo(gb(mat), x - s / 2, 0, z - s / 2, x + s / 2, H, z + s / 2, { world: true, scale: 2.6, col: 1 }); this.addSolid(x - s / 2, 0, z - s / 2, x + s / 2, H, z + s / 2, 'metal', 0, 'metal');
@@ -2013,9 +2028,8 @@ const World = {
       const n = 1 + (R() < 0.6 ? 1 : 0) + (R() < 0.3 ? 1 : 0);
       for (let k = 0; k < n; k++) {
         const bx = x + (k === 0 ? -0.3 : k === 1 ? 0.4 : 0) + jx, bz = z + (k === 2 ? 0.55 : -0.1 * k) + jz, r = 0.31, h = 0.95;
-        const geo = new THREE.CylinderGeometry(r, r, h, 18, 1, false); const m = new THREE.Matrix4().makeTranslation(bx, h / 2, bz).multiply(new THREE.Matrix4().makeRotationY(R() * TAU));
-        gb(R() < 0.6 ? 'barrel' : 'barrelRed').addGeometry(geo, m, 1); geo.dispose();
-        this.addSolid(bx - r, 0, bz - r, bx + r, h, bz + r, 'metal', 1, 'metal');
+        const ry = R() * TAU, secret = MAP.secret && cell.c === 26 && cell.r === 2, red = R() >= 0.6 && !secret;
+        this.breakable(cell, 'metal', red ? 25 : 90, [{ cyl: [bx, bz, r, h, ry], mat: red ? 'barrelRed' : 'barrel' }], { explosive: red, fixed: secret });
       }
     } else if (ch === 'p') { if (MAP.snow) this.addPine(x + jx, z + jz, R); else this.addPalm(x + jx, z + jz, R); }
     else if (ch === 's') this.addShrub(x + jx * 2, z + jz * 2, R);
@@ -2136,9 +2150,9 @@ function initRenderer() {
   // sky dome: gradient, sun glow and drifting clouds
   const skyMat = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { sunDir: { value: SUN_DIR }, time: { value: 0 }, zen: { value: new THREE.Color() }, hor: { value: new THREE.Color() }, gnd: { value: new THREE.Color() }, cloud: { value: 0.52 } },
+    uniforms: { sunDir: { value: SUN_DIR }, time: { value: 0 }, zen: { value: new THREE.Color() }, hor: { value: new THREE.Color() }, gnd: { value: new THREE.Color() }, cloud: { value: 0.52 }, sunCol: { value: new THREE.Color(1, 0.86, 0.6) }, stars: { value: 0 }, cloudLight: { value: 1 } },
     vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); vec4 p = modelViewMatrix*vec4(position,1.0); gl_Position = projectionMatrix*p; gl_Position.z = gl_Position.w*0.9999; }',
-    fragmentShader: `varying vec3 vDir; uniform vec3 sunDir; uniform float time; uniform vec3 zen; uniform vec3 hor; uniform vec3 gnd; uniform float cloud;
+    fragmentShader: `varying vec3 vDir; uniform vec3 sunDir; uniform float time; uniform vec3 zen; uniform vec3 hor; uniform vec3 gnd; uniform float cloud; uniform vec3 sunCol; uniform float stars; uniform float cloudLight;
       float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
       float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
       float fbm(vec2 p){ float s=0.0, a=0.5; for(int i=0;i<5;i++){ s+=a*n(p); p*=2.03; a*=0.5; } return s; }
@@ -2147,10 +2161,11 @@ function initRenderer() {
         vec3 col = mix(hor, zen, pow(clamp(y,0.0,1.0), 0.45));
         col = mix(col, gnd, smoothstep(0.0,-0.12,y));
         float sd = max(dot(d, sunDir), 0.0);
-        col += vec3(1.0,0.86,0.6)*pow(sd, 8.0)*0.35 + vec3(1.0,0.95,0.85)*pow(sd, 90.0)*0.8;
-        col += vec3(1.0,0.97,0.9)*smoothstep(0.9993,0.9997,sd)*3.0;
+        col += sunCol*pow(sd, 8.0)*0.35 + sunCol*pow(sd, 90.0)*0.8;
+        col += sunCol*smoothstep(0.9993,0.9997,sd)*3.0;
+        if (stars > 0.0 && y > 0.0) { vec3 q = floor(d*420.0); float st = step(0.9972, fract(sin(dot(q, vec3(12.9898,78.233,45.164)))*43758.5453)); col += vec3(0.9,0.93,1.0)*st*stars*smoothstep(0.0,0.25,y); }
         if (y > 0.02) { vec2 uv = d.xz/(y+0.12)*1.4 + vec2(time*0.004, time*0.0015); float c = fbm(uv*1.3); c = smoothstep(cloud,cloud+0.3,c)*smoothstep(0.02,0.25,y);
-          vec3 cc = mix(vec3(0.92,0.9,0.86), vec3(1.0,0.96,0.88), pow(sd,6.0)); col = mix(col, cc, c*0.75); }
+          vec3 cc = mix(vec3(0.92,0.9,0.86), vec3(1.0,0.96,0.88), pow(sd,6.0))*cloudLight; col = mix(col, cc, c*0.75); }
         gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -2768,7 +2783,7 @@ const VM = {
     // shade the gun like the world: sun direction in camera space, darker in shadow
     _v1.copy(SUN_DIR).applyQuaternion(_q1.copy(camera.quaternion).invert()); vmSun.position.copy(_v1);
     const inShade = World.raycast(camera.position.x, camera.position.y, camera.position.z, SUN_DIR.x, SUN_DIR.y, SUN_DIR.z, 60) >= 0;
-    this.shade = damp(this.shade ?? 1, inShade ? 0.15 : 1, 6, dt); vmSun.intensity = 2.6 * this.shade; vmHemi.intensity = 0.75 + 0.35 * this.shade;
+    this.shade = damp(this.shade ?? 1, inShade ? 0.15 : 1, 6, dt); vmSun.intensity = 2.6 * this.shade * (Env.vmSun ?? 1); vmHemi.intensity = (0.75 + 0.35 * this.shade) * (Env.vmHemi ?? 1) + (Env.flashOn ? Env.dark * 0.6 : 0);
   },
 };
 
@@ -2881,11 +2896,11 @@ Object.assign(WEAPONS.scout, { swap: { olive: 'polymer' } });
 Object.assign(WEAPONS, {
   rpg: { id: 'rpg', name: 'РПГ-7', slot: 1, kind: 'launcher', price: 4500, dmg: 170, mag: 1, reserve: 4, rate: 1.0, reload: 2.8, draw: 1.0, speed: 4.6, spread: { base: 0.003, move: 0.04, air: 0.08, rec: 0, max: 0 }, kick: 3, sound: 'rpg', reward: 300, vmPos: [0.17, -0.1, -0.42], muzzle: [0, 0, -0.86] },
   minigun: { id: 'minigun', name: 'Миниган', slot: 1, kind: 'rifle', price: 6000, dmg: 22, armorPen: 0.75, rangeMod: 0.95, rate: 0.045, auto: true, mag: 200, reserve: 200, reload: 6, draw: 1.4, speed: 4.2, spin: 0.45, push: 1.6, spread: { base: 0.012, move: 0.05, air: 0.1, rec: 0.0012, max: 0.05 }, pattern: sprayPattern(99, 200, 0.16, 0.35), sound: 'smg', reward: 300, pen: 1.2, vmPos: [0.16, -0.2, -0.45], muzzle: [0, 0.03, -0.75] },
-  taser: { id: 'taser', name: 'Тазер', slot: 2, kind: 'pistol', price: 200, dmg: 500, armorPen: 1, range: 4.6, rate: 1, mag: 1, reserve: 0, reload: 1, draw: 0.5, speed: 5.9, spread: { base: 0.004, move: 0.02, air: 0.05, rec: 0, max: 0 }, kick: 0.5, sound: 'taser', reward: 0, zap: true, vmPos: [0.135, -0.15, -0.46], muzzle: [0, 0.04, -0.14] },
+  taser: { id: 'taser', name: 'Тазер', slot: 6, kind: 'pistol', price: 200, dmg: 500, armorPen: 1, range: 4.6, rate: 1, mag: 1, reserve: 0, reload: 1, draw: 0.5, speed: 5.9, spread: { base: 0.004, move: 0.02, air: 0.05, rec: 0, max: 0 }, kick: 0.5, sound: 'taser', reward: 0, zap: true, vmPos: [0.135, -0.15, -0.46], muzzle: [0, 0.04, -0.14] },
   molotov: { id: 'molotov', name: 'Коктейль Молотова', slot: 4, kind: 'grenade', nade: 'fire', team: 'T', price: 400, speed: 6.0, draw: 0.5, reward: 300 },
   incendiary: { id: 'incendiary', name: 'Зажигательная', slot: 4, kind: 'grenade', nade: 'fire', team: 'CT', price: 600, speed: 6.0, draw: 0.5, reward: 300 },
 });
-BUY_MENU[0].items.push('taser');
+BUY_MENU[4].items.push('taser');
 BUY_MENU[1].items.push('minigun', 'rpg');
 BUY_MENU[5].items.push('molotov', 'incendiary');
 Object.assign(STAT_BARS, { rpg: [170, 8, 70], minigun: [22, 100, 20], taser: [100, 5, 40] });
@@ -2918,7 +2933,7 @@ const Rockets = {
       const r = this.list[i]; r.t += dt; r.vel.y -= 1.5 * dt;
       const sp = r.vel.length(), d = _v2.copy(r.vel).divideScalar(sp), step = sp * dt;
       let hitT = World.raycast(r.pos.x, r.pos.y, r.pos.z, d.x, d.y, d.z, step);
-      for (const a of Game.actors) { if (!a.alive || a === r.owner || a.team === r.owner.team) continue; const h = rayHitActor(a, r.pos.x, r.pos.y, r.pos.z, d.x, d.y, d.z, hitT >= 0 ? hitT : step); if (h) hitT = h.t; }
+      for (const a of Game.actors) { if (!a.alive || !foe(a, r.owner)) continue; const h = rayHitActor(a, r.pos.x, r.pos.y, r.pos.z, d.x, d.y, d.z, hitT >= 0 ? hitT : step); if (h) hitT = h.t; }
       if (hitT >= 0 || r.t > 6) { const at = hitT >= 0 ? r.pos.clone().addScaledVector(d, Math.max(0, hitT - 0.1)) : r.pos.clone(); this.explode(at, r.owner); scene.remove(r.mesh); this.list.splice(i, 1); continue; }
       r.pos.addScaledVector(d, step); r.mesh.position.copy(r.pos); r.mesh.lookAt(_v3.copy(r.pos).sub(d));
       FX.alpha.spawn({ x: r.pos.x, y: r.pos.y, z: r.pos.z, vx: rand(-0.3, 0.3), vy: rand(0, 0.4), vz: rand(-0.3, 0.3), size: 0.15, size1: 0.9, life: 1.2, frame: 0, r: 0.75, g: 0.73, b: 0.7, alpha: 0.6, alpha1: 0, drag: 2 });
@@ -2931,12 +2946,12 @@ const Rockets = {
     const R = 6.5;
     for (const a of Game.actors) {
       if (!a.alive) continue; const c = _v2.set(a.pos.x, a.pos.y + 1, a.pos.z), d = c.distanceTo(pos); if (d > R) continue;
-      if (a.team === owner.team && a !== owner) continue;
+      if (a !== owner && !foe(a, owner)) continue;
       if (!World.lineClear(_v3.copy(pos).add(_v4.set(0, 0.2, 0)), c)) continue;
       let dmg = WEAPONS.rpg.dmg * Math.pow(1 - d / R, 1.1) * (a === owner ? 0.35 : 1); if (a.armor > 0) dmg *= 0.75;
       if (dmg >= 1) applyDamage(a, owner, dmg, 'chest', WEAPONS.rpg, c.clone(), _v1.subVectors(c, pos).normalize(), false);
     }
-    knockback(pos, R, 15, owner);
+    knockback(pos, R, 15, owner); Destr.blast(pos, 6.5, 220, owner);
   },
   clear() { for (const r of this.list) scene.remove(r.mesh); this.list.length = 0; },
 };
@@ -2965,7 +2980,7 @@ FX.updateFires = function (dt) {
       f.tick = 0.25;
       for (const a of Game.actors) {
         if (!a.alive || Math.hypot(a.pos.x - f.x, a.pos.z - f.z) > f.r || Math.abs(a.pos.y - f.y) > 1.2) continue;
-        if (f.owner && a.team === f.owner.team && a !== f.owner) continue;
+        if (f.owner && a !== f.owner && !foe(a, f.owner)) continue;
         applyDamage(a, f.owner, 9, 'fire', WEAPONS.molotov, _v2.set(a.pos.x, a.pos.y + 0.3, a.pos.z), UP, false);
       }
     }
@@ -3175,7 +3190,7 @@ class Actor {
     this.id = ACTOR_ID++; this.name = name; this.team = team; this.isBot = isBot; this.isPlayer = !isBot;
     this.pos = V3(); this.vel = V3(); this.yaw = 0; this.pitch = 0; this.onGround = true; this.crouching = false; this.crouchAmt = 0; this.walking = false;
     this.hp = 100; this.armor = 0; this.helmet = false; this.kit = false; this.money = 800; this.alive = false;
-    this.slots = { 1: null, 2: null, 3: null, 4: [], 5: null }; this.curSlot = 3; this.lastSlot = 2; this.nadeIdx = 0;
+    this.slots = { 1: null, 2: null, 3: null, 4: [], 5: null, 6: null }; this.curSlot = 3; this.lastSlot = 2; this.nadeIdx = 0;
     this.stats = { k: 0, d: 0, a: 0, score: 0, dmg: 0, hs: 0 }; this.roundKills = 0;
     this.recP = 0; this.recY = 0; this.shotIdx = 0; this.lastShotT = -9; this.zoom = 0; this.rezoomAt = 0; this.rezoom = 0;
     this.flashT = 0; this.flashMax = 1; this.stepDist = 0; this.stepSmooth = 0; this.jumpHeld = false;
@@ -3195,7 +3210,7 @@ class Actor {
   }
   // ---------------------------------------------------------- inventory
   resetLoadout(full) {
-    if (full) { this.slots = { 1: null, 2: null, 3: null, 4: [], 5: null }; this.armor = 0; this.helmet = false; this.kit = false; }
+    if (full) { this.slots = { 1: null, 2: null, 3: null, 4: [], 5: null, 6: null }; this.armor = 0; this.helmet = false; this.kit = false; }
     this.slots[3] = makeWeapon('knife');
     if (!this.slots[2] && !this.slots[1]) this.slots[2] = makeWeapon(this.team === 'T' ? 'p18' : 'k45');
     else if (!this.slots[2]) this.slots[2] = makeWeapon(this.team === 'T' ? 'p18' : 'k45');
@@ -3269,7 +3284,7 @@ function moveActor(a, wx, wz, jump, dt) {
   // speed cap on ground
   const hs = Math.hypot(v.x, v.z); if (a.onGround && hs > maxS * 1.02 && maxS > 0) { const k = Math.max(maxS, hs - 30 * dt) / hs; v.x *= k; v.z *= k; }
   if (maxS === 0 && a.onGround) { v.x *= 0.5; v.z *= 0.5; }
-  v.y -= PHYS.gravity * dt;
+  if (!a.climbing) v.y -= PHYS.gravity * dt;
   const wasGround = a.onGround, vyBefore = v.y;
   // substeps keep fast movement from tunnelling through thin props
   const n = Math.max(1, Math.ceil(Math.max(Math.abs(v.x), Math.abs(v.z), Math.abs(v.y)) * dt / 0.25));
@@ -3388,6 +3403,7 @@ function tryAttack(a, heavy = false) {
     if (d.zap) { muzzleWorld(a, _mz); FX.zap(_mz, endP); }
     else if (k === 0 || Math.random() < 0.3) { muzzleWorld(a, _mz); if (Math.random() < (a === Game.player ? 0.5 : 0.7)) FX.tracer(_mz, endP); }
   }
+  if (d.zap) { w.rechargeAt = now + 20; Game.after(0.45, () => { if (a.alive && a.weapon === w) a.select(a.bestSlot(), true); }); }
   if (d.push) { // heavy guns shove the shooter — point one at your feet and you fly
     dirFromAngles(yaw, pitch, _v1);
     if (_v1.y < -0.5) { // straight up, and the flyer can steer while airborne
@@ -3419,14 +3435,14 @@ function traceBullet(shooter, o, dir, d) {
     const hx = H.x, hy = H.y, hz = H.z, hnx = H.nx, hny = H.ny, hnz = H.nz, hbox = H.box, hexit = H.exit;
     let best = null, bt = wallT, grp = null;
     for (const t of Game.actors) {
-      if (!t.alive || t === shooter || t.team === shooter.team) continue;
+      if (!t.alive || !foe(t, shooter)) continue;
       const cx = t.pos.x - ox, cy = t.pos.y + 1 - oy, cz = t.pos.z - oz, along = cx * dir.x + cy * dir.y + cz * dir.z;
       if (along < -1 || along > bt + 1) continue;
       const px = cx - dir.x * along, py = cy - dir.y * along, pz = cz - dir.z * along; if (px * px + py * py + pz * pz > 2.2) continue;
       const h = rayHitActor(t, ox, oy, oz, dir.x, dir.y, dir.z, bt); if (h) { best = t; bt = h.t; grp = h.group; }
     }
     // a near miss whistles past the player's head
-    if (P && P.alive && P !== shooter && shooter.team !== P.team && best !== P) {
+    if (P && P.alive && foe(shooter, P) && best !== P) {
       const e = P.eye(_v4), cx = e.x - ox, cy = e.y - oy, cz = e.z - oz, along = cx * dir.x + cy * dir.y + cz * dir.z;
       if (along > 2 && along < bt) { const px = cx - dir.x * along, py = cy - dir.y * along, pz = cz - dir.z * along; if (px * px + py * py + pz * pz < 2.2) Sound.whizz(_v1.set(ox + dir.x * along, oy + dir.y * along, oz + dir.z * along)); }
     }
@@ -3438,6 +3454,7 @@ function traceBullet(shooter, o, dir, d) {
     if (tw < 0) return V3(ox + dir.x * wallT, oy + dir.y * wallT, oz + dir.z * wallT);
     const mat = hbox === GROUND ? 'sand' : hbox.surf === 'sand' ? 'sand' : hbox.mat;
     FX.impact(hx, hy, hz, hnx, hny, hnz, mat);
+    if (hbox.destr) Destr.hit(hbox.destr, dmg, shooter, _v1.set(hx, hy, hz)); else if (hbox !== GROUND && hbox.mat === 'stone') Destr.window(hx, hy, hz);
     if (shooter === P || _v1.set(hx, hy, hz).distanceTo(camera.position) < 14) { if (Math.random() < 0.5) Sound.impact(_v1.set(hx, hy, hz), mat); }
     const end = V3(hx, hy, hz);
     if (!hbox.pen) return end;
@@ -3457,7 +3474,7 @@ function knifeAttack(a, w, heavy) {
   a.eye(_eye); let hitActor = null, ht = 9, grp = null;
   for (const off of [0, -0.12, 0.12]) {
     dirFromAngles(a.yaw + off, a.pitch, _dir);
-    for (const t of Game.actors) { if (!t.alive || t === a || t.team === a.team) continue; if (t.pos.distanceTo(a.pos) > 3) continue; const h = rayHitActor(t, _eye.x, _eye.y, _eye.z, _dir.x, _dir.y, _dir.z, d.range); if (h && h.t < ht) { ht = h.t; hitActor = t; grp = h.group; } }
+    for (const t of Game.actors) { if (!t.alive || !foe(t, a)) continue; if (t.pos.distanceTo(a.pos) > 3) continue; const h = rayHitActor(t, _eye.x, _eye.y, _eye.z, _dir.x, _dir.y, _dir.z, d.range); if (h && h.t < ht) { ht = h.t; hitActor = t; grp = h.group; } }
   }
   Game.after(heavy ? 0.18 : 0.09, () => {
     if (!a.alive) return;
@@ -3515,14 +3532,15 @@ function applyDamage(v, att, dmg, group, def, point, dir, wallbang = false, knif
   let mult = group === 'head' ? 4 : group === 'stomach' ? 1.25 : group === 'legs' ? 0.75 : 1;
   if (def && def.kind === 'shotgun' && group === 'head') mult = 2;
   let d = dmg * mult;
-  const armored = group === 'head' ? v.helmet : (group !== 'legs' && group !== 'fall' && group !== 'fire' && v.armor > 0);
+  const soft = group === 'fire' || group === 'zone';
+  const armored = group === 'head' ? v.helmet : (group !== 'legs' && group !== 'fall' && !soft && v.armor > 0);
   let armorHit = false;
   if (armored && def && def.armorPen !== undefined) { const after = d * def.armorPen, ad = (d - after) * 0.5; v.armor = Math.max(0, Math.round(v.armor - ad)); d = after; armorHit = true; }
   else if (armored && knife) { d *= 0.85; v.armor = Math.max(0, v.armor - 8); armorHit = true; }
   d = Math.max(1, Math.round(d));
   const taken = Math.min(v.hp, d); v.hp -= d;
   if (att) { v.damageBy.set(att.id, (v.damageBy.get(att.id) || 0) + taken); att.stats.dmg += taken; if (att === Game.player) { const r = Game.dealt.get(v) || { dmg: 0, hits: 0 }; r.dmg += taken; r.hits++; Game.dealt.set(v, r); } }
-  if (group !== 'fall' && group !== 'fire') {
+  if (group !== 'fall' && !soft) {
     FX.blood(point.x, point.y, point.z, dir.x, dir.y, dir.z, group === 'head' ? 1.4 : 1);
     if (group === 'head' && v.helmet && armorHit) { FX.impact(point.x, point.y, point.z, -dir.x, -dir.y, -dir.z, 'metal', false); }
     // tagging: getting shot slows you down
@@ -3530,12 +3548,12 @@ function applyDamage(v, att, dmg, group, def, point, dir, wallbang = false, knif
   }
   if (v === Game.player) {
     Sound.hurt(armorHit);
-    if (att && group !== 'fire') HUD.damageFrom(att.pos);
+    if (att && !soft) HUD.damageFrom(att.pos);
     if (group === 'fire') HUD.burn && HUD.burn();
     v.recP += rand(0.6, 1.4) * DEG * Math.min(2, d / 25); v.recY += rand(-1, 1) * DEG * 0.5;
   } else if (Game.viewTarget() === v) FX.shake = Math.max(FX.shake, 0.08);
   if (v.isBot && att) v.ai.onDamaged(att);
-  if (att && att.team !== v.team && group !== 'fire') Game.fightAt = { team: v.team, pos: v.pos.clone(), t: Game.time, by: v };
+  if (att && foe(att, v) && group !== 'fire') Game.fightAt = { team: v.team, pos: v.pos.clone(), t: Game.time, by: v };
   if (v.hp <= 0) killActor(v, att, def, group === 'head', wallbang, dir);
   if (att === Game.player && v !== att) { HUD.hitMarker(group === 'head', v.hp <= 0); Sound.hitConfirm(group === 'head' && v.helmet, v.hp <= 0); }
 }
@@ -3544,14 +3562,14 @@ function killActor(v, att, def, head, wallbang, dir) {
   const fromYaw = dir ? Math.atan2(dir.x, dir.z) : v.yaw;
   if (v.model) { v.model.ghost(false); v.model.root.visible = true; v.model.die(fromYaw, v.yaw, head); }
   // drop the best gun and the bomb
-  if (v.slots[1]) v.dropSlot(1, true); else if (v.slots[2] && v.slots[2].id === 'deagle') v.dropSlot(2, true);
+  if (v.slots[1]) v.dropSlot(1, true); if (v.slots[2] && (v.slots[2].id === 'deagle' || isBR())) v.dropSlot(2, true);
   if (v.slots[5]) { v.dropSlot(5, true); Game.radio(null, 'Бомба упала!', 'T'); }
   v.stats.d++;
-  if (att && att !== v && att.team !== v.team) {
+  if (att && foe(att, v)) {
     att.stats.k++; att.roundKills++; if (head) att.stats.hs++; if (att === Game.player) Profile.onKill(head);
     att.stats.score += 2; const reward = def && def.reward !== undefined ? def.reward : 300; Game.addMoney(att, reward, def ? 'убийство: ' + def.name : 'убийство');
     if (att === Game.player && att.roundKills >= 2 && Game.phase !== 'end') { const s = ['', '', 'Двойное убийство', 'Тройное убийство', 'Четыре подряд', 'Эйс!'][Math.min(5, att.roundKills)] || 'Эйс!'; HUD.big(s, '', att.team, 1.6); if (att.roundKills >= 3) Voice.say(s); }
-    for (const [id, dmg] of v.damageBy) { const as = Game.actors.find((x) => x.id === id); if (as && as !== att && as.team === att.team && dmg >= 40) { as.stats.a++; as.stats.score += 1; } }
+    for (const [id, dmg] of v.damageBy) { const as = Game.actors.find((x) => x.id === id); if (as && as !== att && !foe(as, att) && dmg >= 40) { as.stats.a++; as.stats.score += 1; } }
   } else if (att === v || !att) { v.stats.score = Math.max(0, v.stats.score - 1); }
   HUD.killfeed(att && att !== v ? att : null, v, def, head, wallbang);
   if (v === Game.player) Game.onPlayerDeath(att, def, head);
@@ -3609,12 +3627,12 @@ const Nades = {
     const camD = camera.position.distanceTo(n.pos); FX.shake = Math.max(FX.shake, clamp(1 - camD / 25, 0, 1) * 0.6);
     for (const a of Game.actors) {
       if (!a.alive) continue; const c = _v2.copy(a.pos); c.y += 1; const d = c.distanceTo(n.pos); if (d > 9) continue;
-      if (a.team === n.owner.team && a !== n.owner) continue;
+      if (a !== n.owner && !foe(a, n.owner)) continue;
       if (!World.lineClear(_v3.copy(n.pos).add(_v4.set(0, 0.3, 0)), c)) continue;
       let dmg = 98 * Math.pow(1 - d / 9, 1.15); if (a.armor > 0) { a.armor = Math.max(0, a.armor - dmg * 0.25); dmg *= 0.55; }
       if (dmg >= 1) applyDamage(a, n.owner, dmg, 'chest', WEAPONS.he, c, _v1.subVectors(c, n.pos).normalize(), false);
     }
-    knockback(n.pos, 6, 7, n.owner);
+    knockback(n.pos, 6, 7, n.owner); Destr.blast(n.pos, 6, 150, n.owner);
   },
   flash(n) {
     FX.flashPop(n.pos); Sound.flashBang(n.pos);
@@ -3640,7 +3658,7 @@ const Drops = {
     const mesh = w.id === 'c4' ? worldWeaponModel('c4') : worldWeaponModel(w.id); scene.add(mesh);
     const f = from.forward(_v1), p = from.eye(V3()).addScaledVector(f, 0.4); p.y -= 0.3;
     const d = { w, id: w.id, mesh, pos: p, vel: V3(f.x * 3.2 + from.vel.x, 1.5, f.z * 3.2 + from.vel.z), rest: false, t: 0, yaw: from.yaw + rand(-0.4, 0.4) };
-    this.list.push(d); if (this.list.length > 14) { const o = this.list.findIndex((x) => x.id !== 'c4'); if (o >= 0) this.remove(this.list[o]); }
+    this.list.push(d); if (this.list.length > (isBR() ? 140 : 14)) { const o = this.list.findIndex((x) => x.id !== 'c4'); if (o >= 0) this.remove(this.list[o]); }
     if (w.id === 'c4') Game.bomb.state = 'dropped', Game.bomb.drop = d, Game.bomb.carrier = null;
     return d;
   },
@@ -3760,7 +3778,7 @@ class BotAI {
   }
   onFlashed(dur) { this.reactAt = Math.max(this.reactAt, Game.time + dur * 0.8); this.visible = false; }
   onNoise(pos, radius, src, kind) {
-    if (!this.a.alive || (this.target && this.visible) || src.team === this.a.team) return;
+    if (!this.a.alive || (this.target && this.visible) || !foe(src, this.a)) return;
     const d = pos.distanceTo(this.a.pos); if (d > radius) return;
     this.alertPos = pos.clone(); this.alertT = Game.time;
     if (kind === 'shot' || d < radius * 0.6) this.lookAt = pos.clone().add(_v1.set(0, 1.4, 0));
@@ -3778,8 +3796,8 @@ class BotAI {
     let best = null, bd = 1e9;
     const fwdYaw = a.yaw, fov = (this.alertT > now - 3 ? 120 : this.D.fov) * DEG;
     for (const e of Game.actors) {
-      if (!e.alive || e.team === a.team) continue;
-      const head = e.eye(_v2), d = head.distanceTo(eye); if (d > 95) continue;
+      if (!e.alive || !foe(e, a)) continue;
+      const head = e.eye(_v2), d = head.distanceTo(eye); if (d > 95 || d > Env.sight(e)) continue;
       const toYaw = Math.atan2(-(head.x - eye.x), -(head.z - eye.z));
       const known = this.target === e && this.visible;
       if (!known && Math.abs(angNorm(toYaw - fwdYaw)) > fov && d > 2.5) continue;
@@ -3809,7 +3827,7 @@ class BotAI {
     // switch to the best gun when not holding a grenade or the bomb in use
     if (!this.nadeMode && a.curSlot !== a.bestSlot() && !(a.curSlot === 5 && this.mode === 'plant')) {
       const cur = a.weapon; const empty = cur && cur.def.mag && cur.ammo === 0 && cur.reserve === 0;
-      if (a.curSlot === 3 || a.curSlot === 4 || a.curSlot === 5 || empty || (a.curSlot === 2 && a.slots[1] && (a.slots[1].ammo + a.slots[1].reserve > 0))) a.select(a.bestSlot());
+      if (a.curSlot === 3 || a.curSlot === 4 || a.curSlot === 5 || (a.curSlot === 6 && (!this.visible || !a.slots[6] || a.slots[6].ammo === 0)) || empty || (a.curSlot === 2 && a.slots[1] && (a.slots[1].ammo + a.slots[1].reserve > 0))) a.select(a.bestSlot());
     }
     if (a.curSlot === 1 && a.slots[1] && a.slots[1].ammo === 0 && a.slots[1].reserve === 0 && a.slots[2]) a.select(2);
     const tgt = this.target && this.target.alive ? this.target : null; if (!tgt) this.target = null;
@@ -3849,6 +3867,8 @@ class BotAI {
       // grenade at a distant enemy
       if (!this.nadeMode && dist > 12 && dist < 30 && Math.random() < 0.005 && w && w.def.kind !== 'sniper') { const g = a.slots[4].find((x) => x.id === 'he' || WEAPONS[x.id].nade === 'fire'); if (g) this.startNade(g.id, tgt.pos); }
       if (w && w.def.kind === 'knife' && dist < 2.1) fire = true;
+      if (a.slots[6] && a.slots[6].ammo > 0 && dist < 4 && a.curSlot !== 6 && Math.random() < 0.08) a.select(6);
+      if (w && w.def.zap && dist < 4.2 && now - w.drawStart > 0.4) fire = true;
     } else {
       // ------------------------------------------------ objectives
       if (tgt && now - this.lastSeenT < 6 && this.lastSeen) {
@@ -3858,7 +3878,7 @@ class BotAI {
       } else {
         if (this.target && now - this.lastSeenT >= 6) this.target = null;
         const F = Game.fightAt; // a teammate nearby is in a fight: go and help
-        if (F && F.team === a.team && now - F.t < 1.5 && F.by !== a && this.helped !== F.t && !a.hasBomb() && this.mode !== 'defuse' && this.mode !== 'plant' && a.pos.distanceTo(F.pos) < 26 && Math.random() < 0.5) {
+        if (F && !isBR() && F.team === a.team && now - F.t < 1.5 && F.by !== a && this.helped !== F.t && !a.hasBomb() && this.mode !== 'defuse' && this.mode !== 'plant' && a.pos.distanceTo(F.pos) < 26 && Math.random() < 0.5) {
           this.helped = F.t; this.lookAt = F.pos.clone().add(_v3.set(0, 1.4, 0)); this.alertT = now; this.lastSeen = F.pos.clone(); this.lastSeenT = now - 2; this.pausePath = false;
           this.setGoal(F.pos, 'hunt'); if (Math.random() < 0.4) Game.radio(a, 'Иду на помощь!');
         }
@@ -3920,9 +3940,10 @@ class BotAI {
   // ---------------------------------------------------------- strategy per side
   objective(dt) {
     const a = this.a, now = Game.time, B = Game.bomb, plan = Game.plan;
+    if (isBR()) return this.brObjective();
     if (Game.cfg.mode === 'dm') { // deathmatch: hunt around the map
       if (!this.goal || this.goalKind !== 'roam' || this.arrived() || now > (this.roamT || 0)) {
-        const en = Game.actors.filter((e) => e.alive && e.team !== a.team); let pos;
+        const en = Game.actors.filter((e) => e.alive && foe(e, a)); let pos;
         if (en.length && Math.random() < 0.65) { const e = choice(en); pos = V3(e.pos.x + rand(-6, 6), 0, e.pos.z + rand(-6, 6)); }
         else { const c = choice(World.cells.filter((x) => x.walk)); pos = V3(cellX(c.c), c.floorH, cellZ(c.r)); }
         this.setGoal(pos, 'roam'); this.roamT = now + rand(6, 12);
@@ -3997,6 +4018,30 @@ class BotAI {
       }
     }
   }
+  brObjective() {
+    const a = this.a, now = Game.time, Z = BR.zone; if (!Z) return; this.mode = 'move';
+    const N = Z.next || Z, urgent = Z.state === 'shrink' || Z.t < 14;
+    // 1) get inside the zone
+    if (!BR.inside(a.pos.x, a.pos.z) || (urgent && Math.hypot(a.pos.x - N.cx, a.pos.z - N.cz) > N.r * 0.85)) {
+      if (this.goalKind !== 'zone' || this.arrived()) { const ang = rand(0, TAU), d = Math.sqrt(Math.random()) * N.r * 0.6; this.setGoal(V3(N.cx + Math.cos(ang) * d, 0, N.cz + Math.sin(ang) * d), 'zone'); }
+      return;
+    }
+    // 2) find a gun (and patch up)
+    const needGun = !a.slots[1], needMed = a.hp < 60;
+    if ((needGun || needMed || a.armor < 50) && (this.goalKind !== 'loot' || this.arrived() || now > this.lootT)) {
+      let best = null, bd = 32;
+      if (needGun) for (const d of Drops.list) { if (!d.rest || d.id === 'c4' || (d.w.def.slot === 2 && a.slots[2]) || (d.w.def.slot !== 1 && d.w.def.slot !== 2)) continue; const dd = a.pos.distanceTo(d.pos) - (d.w.def.slot === 1 ? 6 : 0); if (dd < bd) { bd = dd; best = d.pos; } }
+      for (const it of BR.items) { if (!((needMed && it.type === 'med') || (a.armor < 50 && it.type === 'vest'))) continue; const dd = a.pos.distanceTo(it.pos); if (dd < bd) { bd = dd; best = it.pos; } }
+      if (best && BR.inside(best.x, best.z)) { this.setGoal(best, 'loot'); this.lootT = now + 9; return; }
+    }
+    if (this.goalKind === 'loot' && !this.arrived() && now < this.lootT) return;
+    // 3) wander inside the zone, drifting toward enemies we heard
+    if (this.goalKind !== 'roam' || this.arrived() || now > (this.roamT || 0)) {
+      let pos = null; if (this.alertPos && now - this.alertT < 6 && BR.inside(this.alertPos.x, this.alertPos.z) && Math.random() < 0.6) pos = this.alertPos.clone();
+      if (!pos) { const ang = rand(0, TAU), d = Math.sqrt(Math.random()) * Math.min(Z.r, N.r + 6) * 0.8; pos = V3(N.cx + Math.cos(ang) * d, 0, N.cz + Math.sin(ang) * d); }
+      this.setGoal(pos, 'roam'); this.roamT = now + rand(7, 14); a.walking = Math.random() < 0.3;
+    }
+  }
   cycleWatch(team, area, dt) {
     this.watchT -= dt; if (this.watchT <= 0) { this.watchT = rand(2.5, 6); const list = MAP.watch[team][area] || MAP.watch[team].A; this.watchPoint = cw(choice(list)); }
   }
@@ -4044,6 +4089,7 @@ function botBuy(a) {
   if (m() >= 300 && Math.random() < 0.5) buy('smoke');
   if (m() >= 200 && Math.random() < 0.5) buy('flash');
   if (m() >= 600 && Math.random() < 0.4) buy(T ? 'molotov' : 'incendiary');
+  if (m() >= 400 && !a.slots[6] && Math.random() < 0.15) buy('taser');
   a.select(a.bestSlot(), true);
 }
 
@@ -4071,13 +4117,15 @@ const Game = {
   get killLimit() { return { 3: 25, 5: 40, 8: 60 }[this.cfg.len] || 40; },
   startMatch(cfg) {
     Object.assign(this.cfg, cfg);
+    BR.stop(); Climb.reset();
     if (MAP.id !== (this.cfg.map || 'dune')) World.load(this.cfg.map);
     for (const a of this.actors) if (a.model) a.model.dispose();
     this.actors = []; Drops.clear(); Nades.clear(); FX.reset(); this.clearBombMesh();
     const side = cfg.side === 'auto' ? (Math.random() < 0.5 ? 'T' : 'CT') : cfg.side, other = side === 'T' ? 'CT' : 'T';
     const p = new Actor('Вы', side, false); this.player = p; this.actors.push(p);
     const names = shuffle(BOT_NAMES.slice());
-    if (this.cfg.mode === 'train') { for (let k = 0; k < 6; k++) { const b = new Actor('Мишень ' + (k + 1), other, true); b.ai = new DummyAI(b); this.actors.push(b); } }
+    if (this.cfg.mode === 'br') { for (let k = 0; k < this.cfg.size * 2 - 1; k++) this.actors.push(this.makeBot(names.pop() || 'Бот ' + k, Math.random() < 0.5 ? 'T' : 'CT')); }
+    else if (this.cfg.mode === 'train') { for (let k = 0; k < 6; k++) { const b = new Actor('Мишень ' + (k + 1), other, true); b.ai = new DummyAI(b); this.actors.push(b); } }
     else {
       for (let k = 0; k < this.cfg.size - 1; k++) this.actors.push(this.makeBot(names.pop(), side));
       for (let k = 0; k < this.cfg.size; k++) this.actors.push(this.makeBot(names.pop(), other));
@@ -4085,8 +4133,8 @@ const Game = {
     for (const a of this.actors) { a.squad = a.team === side ? 0 : 1; a.ensureModel(); a.resetLoadout(true); a.money = 800; }
     this.squadSide = [side, other]; this.squadScore = [0, 0]; this.lossStreak = { T: 0, CT: 0 }; this.round = 1; this.halfDone = false;
     this.time = 0; this.state = 'playing'; this.paused = false; this.train = { shots: 0, hits: 0, heads: 0, kills: 0 };
-    Profile.matchStart(); Killcam.reset(); Secret.reset();
-    HUD.reset(); if (this.free) this.startFree(); else this.startRound();
+    Profile.matchStart(); Killcam.reset(); Secret.reset(); Env.startMatch(this.cfg);
+    HUD.reset(); if (this.cfg.mode === 'br') BR.start(); else if (this.free) this.startFree(); else this.startRound();
   },
   // ---------------------------------------------------------- deathmatch & training: one long fight with respawns
   startFree() {
@@ -4123,10 +4171,11 @@ const Game = {
     a.curSlot = -1; a.select(a.bestSlot(), true);
     a.ensureModel(); a.model.reset(); a.model.setWeapon(a.weapon ? a.weapon.id : null); a.model.ghost(a === this.player); a.model.tag.visible = false;
     if (a.ai) a.ai.reset();
-    if (a === this.player) { VM.set(a.weapon.id, a.team); HUD.slots(); HUD.bomb(); this.spectate = null; $('killer').classList.add('hidden'); }
+    if (a === this.player) { VM.set(a.weapon.id, a.team); HUD.slots(); HUD.bomb(); this.spectate = null; $('killer').classList.add('hidden'); Climb.reset(); a.climbing = false; }
   },
   onDeathFree(v, att) {
     if (this.phase === 'over') return;
+    if (isBR()) return BR.onDeath(v, att);
     if (this.cfg.mode === 'dm') {
       if (att && att.team !== v.team) { this.squadScore[this.squadSide[0] === att.team ? 0 : 1]++; if (Math.max(...this.squadScore) >= this.killLimit) return this.endFree(); }
       this.after(v === this.player ? (Settings.killcam === false ? 3 : 5.6) : 2.5, () => { if (this.phase === 'live' && !v.alive) this.spawnFree(v); });
@@ -4144,7 +4193,7 @@ const Game = {
   makeBot(name, team) { const b = new Actor(name, team, true); b.ai = new BotAI(b); return b; },
 
   startRound() {
-    Drops.clear(); Nades.clear(); FX.reset(); this.clearBombMesh();
+    Drops.clear(); Nades.clear(); FX.reset(); this.clearBombMesh(); Climb.reset(); Env.onRound();
     this.phase = 'freeze'; this.phaseT = ROUND.freeze; this.liveT = 0; this.roundPlanted = false; this.siteAlarm = null;
     this.spectate = null; this.killerInfo = null; this.deathT = 0; this.dealt = new Map();
     const spawnsT = shuffle(World.spawns.T.slice()), spawnsCT = shuffle(World.spawns.CT.slice());
@@ -4189,10 +4238,11 @@ const Game = {
     if (this.bomb.state === 'planted') this.updateBomb(dt);
     this.updatePlayer(dt);
     for (const a of this.actors) if (a.isBot && a.alive) { a.ai.update(dt); updateWeapon(a, dt); }
+    for (const a of this.actors) { const z = a.slots[6]; if (z && z.ammo === 0 && this.time >= (z.rechargeAt || 0)) { z.ammo = 1; if (a === this.player) { HUD.chat('Тазер заряжен.', 'sys'); HUD.slots(); } } }
     separateActors(this.actors);
-    for (const a of this.actors) { if (a.model) { a.model.animate(a, dt); a.model.tag.visible = a.alive && a.team === this.player.team && a !== this.player && this.player.alive !== undefined; } }
+    for (const a of this.actors) { if (a.model) { a.model.animate(a, dt); a.model.tag.visible = !isBR() && a.alive && a.team === this.player.team && a !== this.player && this.player.alive !== undefined; } }
     // dead body of the player is shown, alive body is a shadow-only ghost
-    Drops.update(dt); Nades.update(dt); Rockets.update(dt); Secret.update(dt);
+    Drops.update(dt); Nades.update(dt); Rockets.update(dt); Secret.update(dt); if (isBR()) BR.update(dt);
     // automatic pickups when walking over a gun
     for (const a of this.actors) {
       if (!a.alive) continue;
@@ -4214,7 +4264,7 @@ const Game = {
       const sy = Math.sin(p.yaw), cy = Math.cos(p.yaw);
       p.walking = Input.down('ShiftLeft') || Input.down('ShiftRight');
       p.crouching = Input.down('ControlLeft') || Input.down('ControlRight') || Input.down('KeyC');
-      moveActor(p, -sy * f + cy * r, -cy * f - sy * r, !typing && Input.hit('Space'), dt);
+      if (!Climb.control(p, dt, f, r, typing)) moveActor(p, -sy * f + cy * r, -cy * f - sy * r, !typing && !p.climbing && Input.hit('Space'), dt);
       if (!UI.cursorWanted()) this.playerWeapons(dt);
       updateWeapon(p, dt);
     } else {
@@ -4227,15 +4277,16 @@ const Game = {
   },
   playerWeapons(dt) {
     const p = this.player, w = p.weapon, now = this.time;
-    for (let k = 1; k <= 5; k++) if (Input.hit('Digit' + k)) p.select(k);
+    for (let k = 1; k <= 6; k++) if (Input.hit('Digit' + k)) p.select(k);
     if (Input.hit('KeyQ')) p.select(p.lastSlot);
     if (Input.wheel) {
-      const order = [1, 2, 3, 4, 5].filter((s) => s === 4 ? p.slots[4].length : p.slots[s]); let i = order.indexOf(p.curSlot);
+      const order = [1, 2, 3, 4, 5, 6].filter((s) => s === 4 ? p.slots[4].length : p.slots[s]); let i = order.indexOf(p.curSlot);
       i = (i + (Input.wheel > 0 ? 1 : -1) + order.length) % order.length; p.select(order[i]);
     }
     if (Input.hit('KeyR')) startReload(p);
     if (Input.hit('KeyG') && w && (p.curSlot === 1 || p.curSlot === 2 || p.curSlot === 5)) { p.dropSlot(p.curSlot); }
     if (Input.hit('KeyF') && w && !w.reloading) w.inspectT = now;
+    if (Input.hit('KeyL')) Env.toggleFlash();
     // use key: plant, defuse, pick up
     const useHeld = Input.down('KeyE');
     const site = World.siteAt(p.pos.x, p.pos.z);
@@ -4308,7 +4359,7 @@ const Game = {
     const sp = World.spawns[a.team]; let cx = 0, cz = 0; for (const c of sp) { cx += cellX(c.c); cz += cellZ(c.r); } cx /= sp.length; cz /= sp.length;
     return Math.hypot(a.pos.x - cx, a.pos.z - cz) < 16;
   },
-  canBuy(a) { return (this.free && a.alive) || this.phase === 'freeze' || (this.phase === 'live' && this.liveT < ROUND.buy && this.inBuyZone(a)); },
+  canBuy(a) { if (isBR()) return false; return (this.free && a.alive) || this.phase === 'freeze' || (this.phase === 'live' && this.liveT < ROUND.buy && this.inBuyZone(a)); },
   priceOf(id, a) { if (this.free) return 0; if (GEAR[id]) { if (id === 'vesthelm' && a && a.armor >= 100 && !a.helmet) return 350; return GEAR[id].price; } return WEAPONS[id].price; },
   buyState(a, id) {
     const g = GEAR[id], d = WEAPONS[id], team = (g && g.team) || (d && d.team);
@@ -4367,7 +4418,7 @@ const Game = {
     if (B.timer <= 0 && B.state === 'planted') this.explodeBomb();
   },
   explodeBomb() {
-    const B = this.bomb; B.state = 'exploded'; FX.bombExplosion(B.pos); Sound.explosion(B.pos, true);
+    const B = this.bomb; B.state = 'exploded'; FX.bombExplosion(B.pos); Sound.explosion(B.pos, true); Destr.blast(B.pos, 16, 1000, B.planter);
     FX.shake = Math.max(FX.shake, clamp(1.2 - camera.position.distanceTo(B.pos) / 60, 0.2, 1.2));
     if (B.mesh) { scene.remove(B.mesh); B.mesh = null; }
     for (const a of this.actors) {
@@ -4399,7 +4450,7 @@ const Game = {
   spot(enemy) { enemy.spottedUntil = this.time + 1.6; },
   radioLast: 0,
   radio(a, text, team) {
-    const p = this.player; if (!p) return;
+    const p = this.player; if (!p || isBR()) return;
     const t = a ? a.team : team; if (t !== p.team) return;
     if (a && this.time - (a.lastRadio || -9) < 3) return; if (a) a.lastRadio = this.time;
     const key = text.replace(/:.*/, ''); this.radioSeen = this.radioSeen || {}; if (this.time - (this.radioSeen[key] || -9) < 4) return; this.radioSeen[key] = this.time;
@@ -4407,7 +4458,7 @@ const Game = {
     if (this.time - this.radioLast > 0.8) { Sound.radio(); this.radioLast = this.time; }
   },
   onPlayerDeath(att, def, head) {
-    this.deathT = 0; this.killerInfo = { actor: att, def, head };
+    this.deathT = 0; this.killerInfo = { actor: att, def, head }; Climb.reset(); if (this.player) this.player.climbing = false;
     VM.cur && (VM.cur.group.visible = false);
     HUD.killedBy(att, def, head); Killcam.onPlayerDeath(att, def);
     if (UI.buyOpen) UI.closeBuy();
@@ -4453,7 +4504,7 @@ const Game = {
   },
   pause() { if (this.state !== 'playing' || this.paused) return; this.paused = true; this.pausedAt = performance.now(); Input.keys.clear(); Input.lmb = Input.rmb = false; UI.showPause(true); },
   resume() { this.paused = false; UI.showPause(false); requestLock(); },
-  quit() { this.state = 'menu'; this.paused = false; for (const a of this.actors) if (a.model) a.model.dispose(); this.actors = []; this.player = null; Drops.clear(); Nades.clear(); FX.reset(); this.clearBombMesh(); VM.cur && (VM.cur.group.visible = false); UI.toMenu(); },
+  quit() { BR.stop(); Climb.reset(); this.state = 'menu'; this.paused = false; for (const a of this.actors) if (a.model) a.model.dispose(); this.actors = []; this.player = null; Drops.clear(); Nades.clear(); FX.reset(); this.clearBombMesh(); VM.cur && (VM.cur.group.visible = false); UI.toMenu(); },
 };
 
 // =====================================================================
@@ -4500,6 +4551,7 @@ const HUD = {
     $('killer').classList.add('hidden'); $('spect').classList.add('hidden');
     const p = Game.player, sideName = p.team === 'T' ? 'террористов' : 'спецназа';
     $('trainStats').classList.toggle('hidden', Game.cfg.mode !== 'train');
+    if (isBR()) { $('roundno').textContent = `${MAP.name} · королевская битва · B — нельзя, ищите оружие`; return; }
     if (Game.cfg.mode === 'dm') { $('roundno').textContent = `${MAP.name} · бой насмерть · до ${Game.killLimit} убийств`; return; }
     if (Game.cfg.mode === 'train') { $('roundno').textContent = `${MAP.name} · тренировка · Esc — выйти`; return; }
     this.big(`Раунд ${Game.round}`, `Вы за ${sideName} · B — закупка`, p.team, 2.6);
@@ -4528,9 +4580,9 @@ const HUD = {
   bomb() { const p = Game.player; $('bombicon').classList.toggle('hidden', !(p && p.alive && p.hasBomb())); },
   slots() {
     const p = Game.player; if (!p) return; const rows = [];
-    for (const s of [1, 2, 3, 4, 5]) {
+    for (const s of [1, 2, 3, 4, 5, 6]) {
       if (s === 4) { if (p.slots[4].length) rows.push(`<div class="${p.curSlot === 4 ? 'on' : ''}"><i>4</i>${p.slots[4].map((g) => g.def.name).join(' · ')}</div>`); continue; }
-      const w = p.slots[s]; if (w) rows.push(`<div class="${p.curSlot === s ? 'on' : ''}"><i>${s}</i>${w.def.name}</div>`);
+      const w = p.slots[s]; if (w) rows.push(`<div class="${p.curSlot === s ? 'on' : ''}"><i>${s}</i>${w.def.name}${s === 6 && w.ammo === 0 ? ' <small>заряжается</small>' : ''}</div>`);
     }
     $('slots').innerHTML = rows.join('');
   },
@@ -4559,21 +4611,26 @@ const HUD = {
     this.setText('ar', String(Math.round(t.armor))); $('arBar').style.width = t.armor + '%';
     const w = t.weapon;
     this.setText('wname', w ? w.def.name : '');
-    if (w && w.def.mag) { this.setHTML('ammo', `${w.ammo}<small>/ ${w.reserve}</small>`); $('ammo').classList.toggle('low', w.ammo <= Math.ceil(w.def.mag * 0.2)); }
+    if (w && w.def.zap) this.setHTML('ammo', w.ammo ? '1<small>заряд</small>' : `${Math.max(0, Math.ceil((w.rechargeAt || 0) - Game.time))}<small>с</small>`);
+    else if (w && w.def.mag) { this.setHTML('ammo', `${w.ammo}<small>/ ${w.reserve}</small>`); $('ammo').classList.toggle('low', w.ammo <= Math.ceil(w.def.mag * 0.2)); }
     else this.setHTML('ammo', w && w.def.kind === 'grenade' ? `${p.slots[4].length}<small>шт.</small>` : '—');
     const mEl = $('money'); if (this.last.moneyV !== p.money) { this.last.moneyV = p.money; mEl.firstChild.nodeValue = '$' + p.money + ' '; }
     // timer
     let tm = Math.max(0, Game.phaseT), label = 'РАУНД', bomb = false;
-    if (Game.cfg.mode === 'dm') label = 'БОЙ';
+    if (isBR()) { const Z = BR.zone; tm = Z ? Math.max(0, Z.t) : 0; label = !Z ? '' : Z.state === 'wait' ? (Z.stage >= BR_STAGES.length - 1 ? 'ФИНАЛ' : 'ЗОНА ЧЕРЕЗ') : 'СУЖЕНИЕ'; }
+    else if (Game.cfg.mode === 'dm') label = 'БОЙ';
     else if (Game.cfg.mode === 'train') { tm = Game.liveT; label = 'ТРЕНИРОВКА'; const T = Game.train; this.setHTML('trainStats', `<b>СТАТИСТИКА</b>Выстрелов: ${T.shots}<br>Попаданий: ${T.hits} (${T.shots ? Math.round(Math.min(100, T.hits / T.shots * 100)) : 0}%)<br>В голову: ${T.heads}<br>Сбито мишеней: ${T.kills}`); }
     else if (Game.phase === 'freeze') label = 'ЗАКУПКА';
     else if (Game.phase === 'planted' || (Game.phase === 'end' && Game.bomb.state === 'planted')) { tm = Math.max(0, Game.bomb.timer); label = 'БОМБА'; bomb = true; }
     else if (Game.phase === 'end') label = 'КОНЕЦ РАУНДА';
     this.setText('tval', fmtTime(tm)); this.setText('phase', label); $('timer').classList.toggle('bomb', bomb);
     // score + alive pips (CT left, T right)
-    this.setText('scoreL', String(Game.scoreOf('CT'))); this.setText('scoreR', String(Game.scoreOf('T')));
-    const pips = (team) => Game.actors.filter((a) => a.team === team).map((a) => `<i class="${a.alive ? '' : 'dead'}"></i>`).join('');
-    this.setHTML('aliveL', pips('CT')); this.setHTML('aliveR', pips('T'));
+    if (isBR()) { this.setText('scoreL', String(BR.alive())); this.setText('scoreR', String(p.stats.k)); this.setHTML('aliveL', '<small>живых</small>'); this.setHTML('aliveR', '<small>убийств</small>'); }
+    else {
+      this.setText('scoreL', String(Game.scoreOf('CT'))); this.setText('scoreR', String(Game.scoreOf('T')));
+      const pips = (team) => Game.actors.filter((a) => a.team === team).map((a) => `<i class="${a.alive ? '' : 'dead'}"></i>`).join('');
+      this.setHTML('aliveL', pips('CT')); this.setHTML('aliveR', pips('T'));
+    }
     // buy zone
     $('buyicon').classList.toggle('hidden', !(p.alive && Game.canBuy(p)));
     // crosshair
@@ -4606,6 +4663,8 @@ const HUD = {
       const site = World.siteAt(p.pos.x, p.pos.z);
       if (p.hasBomb() && site && Game.phase === 'live' && !p.planting) hint = 'Зажмите E, чтобы заложить бомбу';
       else if (p.team === 'CT' && Game.bomb.state === 'planted' && p.pos.distanceTo(Game.bomb.pos) < 1.7 && !p.defusing) hint = 'Зажмите E, чтобы обезвредить бомбу';
+      else if (Climb.ride) hint = 'Пробел — спрыгнуть с троса';
+      else if (Climb.nearZip(p)) hint = 'E — прицепиться к тросу';
       else { const e = p.eye(_v1), f = p.forward(_v2); const d = Drops.nearest(_v3.copy(e).addScaledVector(f, 1.2).setY(p.pos.y), 1.6, (x) => x.id !== 'c4' || p.team === 'T'); if (d) hint = `E — подобрать: ${d.w.def.name}`; }
       if (Game.phase === 'freeze' && !hint) hint = 'Подготовка к раунду · B — закупка';
     }
@@ -4626,6 +4685,11 @@ const HUD = {
     x.globalAlpha = 0.95; x.drawImage(img, -ox, -oz); x.globalAlpha = 1;
     x.setTransform(1, 0, 0, 1, 0, 0);
     const toR = (wx, wz) => { const dx = (wx - t.pos.x) * ppm, dz = (wz - t.pos.z) * ppm, c = Math.cos(yaw), s = Math.sin(yaw); return [S / 2 + dx * c - dz * s, S / 2 + dx * s + dz * c]; };
+    if (isBR() && BR.zone) { // zone circles
+      const Z = BR.zone, N = Z.next; x.lineWidth = 2;
+      if (N && Z.state === 'wait') { const [nx, ny] = toR(N.cx, N.cz); x.strokeStyle = 'rgba(255,255,255,0.8)'; x.setLineDash([6, 5]); x.beginPath(); x.arc(nx, ny, N.r * ppm, 0, TAU); x.stroke(); x.setLineDash([]); }
+      const [cx, cy] = toR(Z.cx, Z.cz); x.strokeStyle = 'rgba(80,150,255,0.95)'; x.lineWidth = 3; x.beginPath(); x.arc(cx, cy, Z.r * ppm, 0, TAU); x.stroke();
+    }
     const B = Game.bomb;
     if (B.state === 'planted' || (B.state === 'dropped' && p.team === 'T' && B.drop) || (B.state === 'carried' && B.carrier && B.carrier.team === p.team && B.carrier !== t)) {
       const bp = B.state === 'planted' ? B.pos : B.state === 'dropped' ? B.drop.pos : B.carrier.pos, [rx, ry] = toR(bp.x, bp.z);
@@ -4633,7 +4697,7 @@ const HUD = {
     }
     for (const a of Game.actors) {
       if (a === t || !a.model) continue;
-      const mate = a.team === p.team, spotted = !mate && a.alive && (a.spottedUntil || 0) > Game.time;
+      const mate = !isBR() && a.team === p.team, spotted = !mate && a.alive && (a.spottedUntil || 0) > Game.time;
       if (!mate && !spotted) continue;
       const [rx, ry] = toR(a.pos.x, a.pos.z);
       if (!a.alive) { if (mate) { x.strokeStyle = 'rgba(255,255,255,0.45)'; x.lineWidth = 2; x.beginPath(); x.moveTo(rx - 5, ry - 5); x.lineTo(rx + 5, ry + 5); x.moveTo(rx + 5, ry - 5); x.lineTo(rx - 5, ry + 5); x.stroke(); } continue; }
@@ -4663,12 +4727,13 @@ const UI = {
       if (!open) { $(id).classList.remove('hidden'); b.classList.add('on'); if (id === 'pnlSettings') $('pnlSettings').appendChild($('setList')); if (id === 'pnlSkins') Skins.renderList(); }
     }));
     const pick = (sel, attr, cb) => document.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => { document.querySelectorAll(sel).forEach((x) => x.classList.remove('on')); b.classList.add('on'); Sound.ui('click'); cb && cb(b.dataset[attr]); }));
-    pick('#sidePick .side', 'side'); pick('#segSize button', 'v'); pick('#segLen button', 'v'); pick('#segDiff button', 'v'); pick('#mapPick .mapc', 'map');
-    const modeNote = { bomb: 'Раунды, экономика, бомба C4. Смена сторон в середине матча.', dm: 'Командный бой с мгновенным возрождением. Любое оружие бесплатно (B).', train: 'Вы и движущиеся мишени. Бесконечные патроны, статистика попаданий.' };
+    pick('#sidePick .side', 'side'); pick('#segTod button', 'v'); pick('#segWeather button', 'v'); pick('#segSize button', 'v'); pick('#segLen button', 'v'); pick('#segDiff button', 'v'); pick('#mapPick .mapc', 'map');
+    const modeNote = { br: 'Каждый сам за себя. Оружие и броня лежат на карте, зона сужается. Побеждает последний выживший.', bomb: 'Раунды, экономика, бомба C4. Смена сторон в середине матча.', dm: 'Командный бой с мгновенным возрождением. Любое оружие бесплатно (B).', train: 'Вы и движущиеся мишени. Бесконечные патроны, статистика попаданий.' };
     pick('#segMode button', 'v', (m) => {
       $('modeNote').textContent = modeNote[m]; $('lenTitle').textContent = m === 'dm' ? 'Лимит убийств' : 'Длина матча';
       const L = m === 'dm' ? ['25', '40', '60'] : ['до 3', 'до 5', 'до 8']; document.querySelectorAll('#segLen button').forEach((b, i) => { b.textContent = L[i]; });
-      for (const id of ['segSize', 'segLen']) $(id).parentElement.classList.toggle('dim', m === 'train');
+      $('segSize').parentElement.classList.toggle('dim', m === 'train'); $('segLen').parentElement.classList.toggle('dim', m === 'train' || m === 'br'); $('sidePick').classList.toggle('dim', m === 'br');
+      $('sizeTitle').textContent = m === 'br' ? 'Размер (×2 = игроков)' : 'Игроков в команде';
       $('segDiff').classList.toggle('dim', m === 'train');
     });
     $('btnStart').addEventListener('click', () => this.startFromMenu());
@@ -4683,7 +4748,7 @@ const UI = {
   async startFromMenu() {
     Sound.init(); Sound.stopMenuMusic(); Sound.ui('click');
     const v = (sel) => document.querySelector(sel + ' .on');
-    const cfg = { side: v('#sidePick').dataset.side, size: +v('#segSize').dataset.v, len: +v('#segLen').dataset.v, diff: +v('#segDiff').dataset.v, mode: v('#segMode').dataset.v, map: v('#mapPick').dataset.map };
+    const cfg = { side: v('#sidePick').dataset.side, size: +v('#segSize').dataset.v, len: +v('#segLen').dataset.v, diff: +v('#segDiff').dataset.v, mode: v('#segMode').dataset.v, map: v('#mapPick').dataset.map, tod: v('#segTod').dataset.v, weather: v('#segWeather').dataset.v };
     requestLock(true);
     if (MAP.id !== cfg.map) { $('boot').classList.remove('hidden'); $('bootText').textContent = 'Строим карту ' + MAPS[cfg.map].name + '…'; $('bootBar').style.width = '90%'; await nextFrame(); await nextFrame(); World.load(cfg.map); $('boot').classList.add('hidden'); }
     $('menu').classList.add('hidden'); $('hud').classList.remove('hidden');
@@ -4707,12 +4772,14 @@ const UI = {
     const best = Game.actors.slice().sort((a, b) => b.stats.score - a.stats.score)[0];
     $('endMvp').innerHTML = `Ваш счёт: ${p.stats.k} убийств, ${p.stats.d} смертей, ${p.stats.hs} в голову, урон ${p.stats.dmg}.<br>Лучший игрок матча: ${best.name} (${best.stats.k} убийств).`;
     if (Game.cfg.mode === 'train') { const T = Game.train; $('endRes').textContent = 'Тренировка'; $('endRes').className = 'res'; $('endScore').textContent = ''; $('endMvp').innerHTML = `Выстрелов ${T.shots}, попаданий ${T.hits}, в голову ${T.heads}, мишеней ${T.kills}.`; }
+    if (isBR()) { $('endRes').textContent = win ? 'Победа!' : `#${BR.place} место`; $('endRes').className = 'res ' + (win ? 'win' : 'lose'); $('endScore').textContent = `${win ? 1 : BR.place} / ${BR.total}`; $('endMvp').innerHTML = `Убийств: ${p.stats.k}, урон ${p.stats.dmg}. ${win ? 'Вы последний выживший!' : ''}`; }
     const gained = Profile.matchEnd(win); $('endMvp').innerHTML += `<br><b style="color:var(--signal2)">+${gained} опыта</b> · ${Profile.rankName()} · уровень ${Profile.data.level}`;
     $('endm').classList.remove('hidden'); Voice.say(win ? 'Победа!' : 'Поражение');
   },
   // ---------------------------------------------------------- buy menu
   openBuy() {
     const p = Game.player; if (!p || !p.alive) return;
+    if (isBR()) { HUD.chat('В королевской битве магазина нет — оружие лежит на карте.', 'sys'); Sound.ui('deny'); return; }
     if (!Game.canBuy(p)) { HUD.chat(Game.inBuyZone(p) ? 'Время закупки истекло.' : 'Вы не в зоне закупки.', 'sys'); Sound.ui('deny'); return; }
     this.buyOpen = true; this.buyCat = null; this.renderBuy(); $('buy').classList.remove('hidden');
     if (document.pointerLockElement) document.exitPointerLock();
@@ -5025,6 +5092,418 @@ const Secret = {
 };
 
 // =====================================================================
+// ENVIRONMENT — time of day, storms, flashlights
+// =====================================================================
+const NIGHT_SKY = { zen: [0.015, 0.025, 0.06], hor: [0.07, 0.09, 0.15], gnd: [0.02, 0.022, 0.03], fog: 0x10151f, sun: 0xa8bcff, sunI: 0.75, hemiSky: 0x5a6a9a, hemiGnd: 0x23232c, hemiI: 0.5, glow: [0.45, 0.5, 0.65] };
+const DUSK_SKY = { zen: [0.2, 0.25, 0.45], hor: [0.86, 0.6, 0.45], gnd: [0.4, 0.32, 0.28], fog: 0xb39a8a, sun: 0xffb478, sunI: 2.0, hemiSky: 0xb4aab8, hemiGnd: 0x6a5446, hemiI: 0.8, glow: [1.0, 0.6, 0.35] };
+const DAY_SUN = new THREE.Vector3(0.48, 0.82, 0.31).normalize(), DUSK_SUN = new THREE.Vector3(0.85, 0.2, 0.48).normalize(), MOON_DIR = new THREE.Vector3(-0.45, 0.72, -0.35).normalize();
+const _c1 = new THREE.Color(), _c2 = new THREE.Color(), _c3 = new THREE.Color();
+const Env = {
+  day: 1, storm: 0, stormTarget: 0, clock: 0, flashOn: false, spot: null, envAt: { d: -1, s: -1 }, wind: null, nightHinted: false, weatherT: 0,
+  cfg: { tod: 'day', weather: 'clear' },
+  init() {
+    this.spot = new THREE.SpotLight(0xfff1d6, 0, 42, 0.4, 0.55, 1.3); scene.add(this.spot, this.spot.target);
+    const g = new THREE.ConeGeometry(1.25, 8, 16, 1, true); g.translate(0, -4, 0); g.rotateX(Math.PI / 2);
+    const pos = g.attributes.position, col = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) { const t = clamp(-pos.getZ(i) / 8, 0, 1), k = Math.pow(1 - t, 1.6); col[i * 3] = k; col[i * 3 + 1] = k * 0.95; col[i * 3 + 2] = k * 0.8; }
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    this.coneGeo = g; this.coneMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
+    this.lensMat = new THREE.MeshBasicMaterial({ color: 0xfff6dd, fog: false });
+  },
+  startMatch(cfg) {
+    this.cfg.tod = cfg.tod || 'day'; this.cfg.weather = cfg.weather || 'clear';
+    this.clock = this.cfg.tod === 'cycle' ? 0.12 : 0;
+    this.stormTarget = this.cfg.weather === 'storm' ? 1 : this.cfg.weather === 'random' ? (Math.random() < 0.45 ? 1 : 0) : 0;
+    this.day = this.dayTarget(); this.storm = this.stormTarget; this.weatherT = rand(60, 120);
+    this.flashOn = this.day < 0.4; this.nightHinted = false; this.apply(true);
+  },
+  onRound() { if (this.cfg.weather === 'random') this.stormTarget = Math.random() < 0.4 ? 1 : 0; },
+  dayTarget() {
+    const t = this.cfg.tod; if (t === 'day') return 1; if (t === 'dusk') return 0.5; if (t === 'night') return 0;
+    const d = 0.5 + 0.5 * Math.cos(this.clock * TAU); return smoothstep(0.18, 0.82, d);
+  },
+  get dark() { return clamp(1 - this.day * 2.2, 0, 1); },
+  // how far a bot can make someone out: darkness and storms cut it down; lights give people away
+  sight(e) {
+    const D = this.day, S = this.storm;
+    let r = lerp(26, 95, D);
+    if (D < 0.6 && ((e === Game.player && this.flashOn) || (e.isBot && this.dark > 0.3))) r = Math.max(r, 45);
+    if (e.weapon && e.weapon.lastShot > Game.time - 0.4) r = Math.max(r, 85);
+    return Math.min(r, lerp(95, 26, S));
+  },
+  update(dt) {
+    if (Game.state === 'playing' && !Game.paused) {
+      if (this.cfg.tod === 'cycle') this.clock = (this.clock + dt / 420) % 1;
+      if (this.cfg.weather === 'random' && Game.free) { this.weatherT -= dt; if (this.weatherT <= 0) { this.weatherT = rand(70, 140); this.stormTarget = this.stormTarget > 0.5 ? 0 : 1; } }
+    }
+    const playing = Game.state === 'playing';
+    const dT = playing ? this.dayTarget() : 1, sT = playing ? this.stormTarget : 0;
+    this.day = damp(this.day, dT, 0.6, dt); this.storm = damp(this.storm, sT, 0.35, dt);
+    if (Math.abs(this.day - dT) < 0.002) this.day = dT; if (Math.abs(this.storm - sT) < 0.002) this.storm = sT;
+    this.apply(false);
+    if (playing) { this.particles(dt); this.lights(dt); }
+    else { this.spot.intensity = 0; }
+    this.sound();
+    if (playing && this.dark > 0.5 && !this.nightHinted) { this.nightHinted = true; if (!this.flashOn) this.flashOn = true; HUD.chat('Стемнело. L — фонарик.', 'sys'); }
+  },
+  apply(force) {
+    const k = MAP.sky, u = skyMesh.material.uniforms, D = this.day, S = this.storm;
+    const pal = (key) => { // night -> dusk -> map's day
+      if (D >= 0.5) { const t = (D - 0.5) / 0.5; return [DUSK_SKY[key], k[key], t]; } const t = D / 0.5; return [NIGHT_SKY[key], DUSK_SKY[key], t];
+    };
+    const mixArr = (key, out) => { const [a, b, t] = pal(key); return out.setRGB(lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)); };
+    const mixHex = (key, out) => { const [a, b, t] = pal(key); return out.set(a).lerp(_c3.set(b), t); };
+    const mixNum = (key) => { const [a, b, t] = pal(key); return lerp(a, b, t); };
+    const stormCol = _c2.set(MAP.snow ? 0xd9e0e8 : 0xc9a676).multiplyScalar(lerp(0.12, 1, D));
+    mixArr('zen', u.zen.value).lerp(stormCol, S * 0.85); mixArr('hor', u.hor.value).lerp(stormCol, S * 0.9); mixArr('gnd', u.gnd.value).lerp(stormCol, S * 0.7);
+    u.cloud.value = lerp(lerp(k.cloud, 0.38, 1 - D), 0.05, S);
+    const gl = D >= 0.5 ? [DUSK_SKY.glow, [1, 0.86, 0.6], (D - 0.5) / 0.5] : [NIGHT_SKY.glow, DUSK_SKY.glow, D / 0.5];
+    u.sunCol.value.setRGB(lerp(gl[0][0], gl[1][0], gl[2]), lerp(gl[0][1], gl[1][1], gl[2]), lerp(gl[0][2], gl[1][2], gl[2])).multiplyScalar(1 - S * 0.85);
+    u.stars.value = clamp(1 - D * 2.5, 0, 1) * (1 - S); u.cloudLight.value = lerp(0.07, 1, smoothstep(0, 0.6, D)) * (S > 0 ? lerp(1, 0.8, S) : 1);
+    // sun / moon direction
+    if (D >= 0.5) SUN_DIR.copy(DUSK_SUN).lerp(DAY_SUN, (D - 0.5) / 0.5).normalize(); else SUN_DIR.copy(MOON_DIR).lerp(DUSK_SUN, Math.pow(D / 0.5, 3)).normalize();
+    sun.position.copy(SUN_DIR).multiplyScalar(110);
+    mixHex('fog', scene.fog.color).lerp(stormCol, S); scene.fog.near = lerp(k.fogNear, 1.5, S); scene.fog.far = lerp(lerp(150, k.fogFar, D), 22, S);
+    mixHex('sun', sun.color); sun.intensity = mixNum('sunI') * (1 - S * 0.72);
+    mixHex('hemiSky', hemi.color).lerp(stormCol, S * 0.5); mixHex('hemiGnd', hemi.groundColor); hemi.intensity = mixNum('hemiI') * (1 + S * 0.25);
+    vmSun.color.copy(sun.color); vmHemi.color.copy(hemi.color);
+    this.vmSun = clamp(sun.intensity / Math.max(0.5, k.sunI), 0.12, 1); this.vmHemi = lerp(0.35, 1, smoothstep(0, 0.6, D));
+    renderer.toneMappingExposure = lerp(1.25, 1.0, D);
+    // the reflection map only gets rebuilt on big changes
+    if (force || Math.abs(D - this.envAt.d) > 0.18 || Math.abs(S - this.envAt.s) > 0.3) { this.envAt.d = D; this.envAt.s = S; rebuildEnv(_c1.copy(hemi.groundColor).multiplyScalar(lerp(0.4, 1, D))); }
+  },
+  particles(dt) {
+    const S = this.storm; if (S < 0.05) return;
+    this.pT = (this.pT || 0) - dt; if (this.pT > 0) return; this.pT = 0.033;
+    const c = camera.position, wx = 1, wz = 0.35, sp = MAP.snow ? 11 : 15, fc = scene.fog.color;
+    const n = Math.round(6 * S);
+    for (let k = 0; k < n; k++) {
+      const ox = rand(-14, 6), oz = rand(-12, 12), oy = rand(-1.5, 4);
+      if (MAP.snow) this.fxSnow(c.x + ox, c.y + oy, c.z + oz, sp);
+      else FX.alpha.spawn({ x: c.x + ox, y: c.y + oy, z: c.z + oz, vx: wx * sp * rand(0.8, 1.2), vy: rand(-0.4, 0.4), vz: wz * sp, size: rand(0.02, 0.05), life: rand(0.6, 1.2), frame: 3, r: 0.72, g: 0.6, b: 0.42, alpha: 0.9, alpha1: 0.6 });
+    }
+    for (let q = 0; q < (Math.random() < 0.6 * S ? 2 : 0); q++) FX.alpha.spawn({ x: c.x + rand(-16, 4), y: c.y + rand(-1, 3), z: c.z + rand(-14, 14), vx: wx * sp * 0.7, vy: rand(-0.2, 0.3), vz: wz * sp * 0.7, size: rand(1.5, 2.5), size1: rand(3.5, 5.5), life: rand(1.4, 2.2), frame: 0, r: fc.r, g: fc.g, b: fc.b, alpha: 0.32 * S, alpha1: 0, fadeIn: 0.3, rv: rand(-0.4, 0.4) });
+  },
+  fxSnow(x, y, z, sp) { FX.alpha.spawn({ x, y, z, vx: sp * rand(0.8, 1.2), vy: rand(-2.5, -1), vz: sp * 0.35, size: rand(0.03, 0.06), life: rand(0.8, 1.4), frame: 3, r: 0.97, g: 0.98, b: 1, alpha: 0.95, alpha1: 0.8, rv: rand(-3, 3) }); },
+  lights() {
+    const p = Game.player, dark = this.dark;
+    // player's flashlight: a real spot light from the gun
+    const on = p && p.alive && this.flashOn && Game.viewTarget() === p && !Killcam.active;
+    this.spot.intensity = on ? 55 * clamp(dark * 1.4 + 0.25, 0, 1) : 0;
+    if (on) {
+      const f = dirFromAngles(p.yaw + p.recY, p.pitch + p.recP, _v1), r = _v2.set(Math.cos(p.yaw), 0, -Math.sin(p.yaw));
+      this.spot.position.copy(camera.position).addScaledVector(r, 0.18).add(_v3.set(0, -0.12, 0)); this.spot.target.position.copy(this.spot.position).addScaledVector(f, 10);
+    }
+    // everybody else: a visible beam and a bright lens
+    for (const a of Game.actors) {
+      const m = a.model; if (!m) continue;
+      if (!m.beam) { m.beam = new THREE.Mesh(this.coneGeo, this.coneMat); m.beam.position.set(0.12, -0.08, -0.62); m.beam.frustumCulled = false; m.aim.add(m.beam); m.lens = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), this.lensMat); m.lens.position.set(0.12, -0.08, -0.6); m.aim.add(m.lens); }
+      const vis = dark > 0.25 && a.alive && !m.ghosted && m.deathT < 0 && (a !== p || !a.alive);
+      m.beam.visible = m.lens.visible = vis && !(a === p);
+      if (vis) m.beam.material.opacity = 0.1 * clamp(dark, 0, 1) * (1 - this.storm * 0.5);
+    }
+  },
+  sound() {
+    if (!Sound.ctx) return;
+    if (!this.wind) {
+      const ctx = Sound.ctx, src = ctx.createBufferSource(); src.buffer = Sound.noiseBuf; src.loop = true;
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 520; f.Q.value = 0.5;
+      const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 0.17; lg.gain.value = 260; lfo.connect(lg); lg.connect(f.frequency); lfo.start();
+      const g = ctx.createGain(); g.gain.value = 0; src.connect(f); f.connect(g); g.connect(Sound.master); src.start(); this.wind = g;
+    }
+    const want = Game.state === 'playing' && !Game.paused ? this.storm * 0.45 : 0;
+    this.wind.gain.value = damp(this.wind.gain.value, want, 2, 1 / 60);
+  },
+  toggleFlash() { this.flashOn = !this.flashOn; Sound.mech('zoom'); },
+};
+function rebuildEnv(gnd) {
+  try {
+    const pm = new THREE.PMREMGenerator(renderer), envScene = new THREE.Scene(), envSky = skyMesh.clone(); envSky.position.set(0, 0, 0);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.MeshBasicMaterial({ color: gnd })); ground.rotation.x = -Math.PI / 2; ground.position.y = -5;
+    envScene.add(envSky, ground); const rt = pm.fromScene(envScene, 0.04); if (envRT) envRT.dispose(); envRT = rt; scene.environment = rt.texture; vmScene.environment = rt.texture; pm.dispose();
+    ground.geometry.dispose(); ground.material.dispose();
+  } catch (e) { /* optional */ }
+}
+
+// =====================================================================
+// WORLD 2 — breakable crates, glass and barrels; ladders, ziplines and roofs
+// =====================================================================
+World.breakable = function (cell, surf, hp, parts, o = {}) {
+  const grp = new THREE.Group(), obj = { cell, surf, hp, boxes: [], grp, alive: true, explosive: !!o.explosive, fixed: !!o.fixed, center: V3() };
+  for (const p of parts) {
+    const g = new GB();
+    if (p.cyl) {
+      const [cx, cz, r, h, ry] = p.cyl, geo = new THREE.CylinderGeometry(r, r, h, 18);
+      g.addGeometry(geo, new THREE.Matrix4().makeTranslation(cx, h / 2, cz).multiply(new THREE.Matrix4().makeRotationY(ry)), 1); geo.dispose();
+      obj.boxes.push(this.addSolid(cx - r, 0, cz - r, cx + r, h, cz + r, 'metal', 1, 'metal'));
+    } else {
+      const [x0, y0, z0, x1, y1, z1] = p.b; boxGeo(g, x0, y0, z0, x1, y1, z1, { rotY: p.rotY });
+      obj.boxes.push(this.addSolid(x0, y0, z0, x1, y1, z1, 'wood', 1));
+    }
+    const mesh = new THREE.Mesh(g.build(), MAT[MAP.theme[p.mat] || p.mat]); mesh.castShadow = true; mesh.receiveShadow = true; grp.add(mesh);
+  }
+  for (const b of obj.boxes) { b.destr = obj; obj.center.x += (b.x0 + b.x1) / 2; obj.center.y += (b.y0 + b.y1) / 2; obj.center.z += (b.z0 + b.z1) / 2; }
+  obj.center.divideScalar(obj.boxes.length);
+  this.group.add(grp); this.breakables.push(obj); return obj;
+};
+World.breakables = []; World.windows = []; World.ladders = []; World.zips = [];
+{ const r = World.reset; World.reset = function () { const out = r.call(this); this.breakables = []; this.windows = []; this.ladders = []; this.zips = []; return out; }; }
+
+const Destr = {
+  hit(obj, dmg, by, point) {
+    if (!obj.alive || obj.fixed) return; obj.hp -= dmg; obj.lastBy = by || obj.lastBy;
+    if (obj.surf === 'wood' && point) for (let k = 0; k < 3; k++) FX.alpha.spawn({ x: point.x, y: point.y, z: point.z, vx: rand(-2, 2), vy: rand(0.5, 3), vz: rand(-2, 2), size: rand(0.03, 0.07), life: rand(0.6, 1.2), frame: 3, r: 0.55, g: 0.4, b: 0.24, alpha: 1, alpha1: 1, grav: 9.8, bounce: true, floor: World.heightAt(point.x, point.z, point.y), rv: rand(-8, 8) });
+    if (obj.hp <= 0) this.destroy(obj);
+  },
+  destroy(obj) {
+    if (!obj.alive) return; obj.alive = false; obj.grp.parent && obj.grp.parent.remove(obj.grp);
+    for (const b of obj.boxes) {
+      b.dead = true; b.destr = null;
+      const c0 = clamp(toCell(b.x0 + 1e-4), 0, MW - 1), c1 = clamp(toCell(b.x1 - 1e-4), 0, MW - 1), r0 = clamp(toCell(b.z0 + 1e-4), 0, MH - 1), r1 = clamp(toCell(b.z1 - 1e-4), 0, MH - 1);
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const L = World.grid[r * MW + c], i = L.indexOf(b.id); if (i >= 0) L.splice(i, 1); }
+    }
+    const c = obj.center, fl = World.heightAt(c.x, c.z, c.y);
+    if (!World.breakables.some((o) => o.alive && o.cell === obj.cell)) { const cell = obj.cell; if (!cell.wall) { cell.walk = true; const n = Nav.node(cell.c, cell.r); if (n) n.walk = true; } }
+    if (obj.surf === 'wood') {
+      Sound.breakWood(c);
+      for (let k = 0; k < 28; k++) FX.alpha.spawn({ x: c.x + rand(-0.5, 0.5), y: c.y + rand(-0.4, 0.5), z: c.z + rand(-0.5, 0.5), vx: rand(-3.5, 3.5), vy: rand(1, 5), vz: rand(-3.5, 3.5), size: rand(0.06, 0.18), life: rand(1.6, 3), frame: 3, r: rand(0.45, 0.62), g: rand(0.32, 0.44), b: rand(0.18, 0.26), alpha: 1, alpha1: 1, grav: 12, bounce: true, floor: fl, rv: rand(-10, 10) });
+      for (let k = 0; k < 6; k++) FX.alpha.spawn({ x: c.x, y: c.y, z: c.z, vx: rand(-1.5, 1.5), vy: rand(0.2, 1), vz: rand(-1.5, 1.5), size: 0.5, size1: rand(1.8, 2.6), life: rand(0.8, 1.4), frame: 0, r: 0.62, g: 0.55, b: 0.45, alpha: 0.5, alpha1: 0, drag: 2.5 });
+    } else if (obj.explosive) {
+      const by = obj.lastBy || null;
+      Game.after(0.05, () => {
+        FX.explosion(c); Sound.explosion(c); Game.noise(c, 60, by, 'shot');
+        FX.shake = Math.max(FX.shake, clamp(1 - camera.position.distanceTo(c) / 25, 0, 1) * 0.6);
+        for (const a of Game.actors) {
+          if (!a.alive) continue; const p = _v2.set(a.pos.x, a.pos.y + 1, a.pos.z), d = p.distanceTo(c); if (d > 6.5) continue;
+          if (!World.lineClear(_v3.copy(c).add(_v4.set(0, 0.4, 0)), p)) continue;
+          let dmg = 130 * Math.pow(1 - d / 6.5, 1.1); if (a.armor > 0) dmg *= 0.7;
+          if (dmg >= 1) applyDamage(a, by && by !== a ? by : null, dmg, 'chest', WEAPONS.barrel, p.clone(), _v1.subVectors(p, c).normalize(), false);
+        }
+        knockback(c, 6.5, 9, by); this.blast(c, 6, 160, by);
+      });
+    } else {
+      Sound.impact(c, 'metal');
+      for (let k = 0; k < 10; k++) FX.add.spawn({ x: c.x, y: c.y, z: c.z, vx: rand(-4, 4), vy: rand(1, 5), vz: rand(-4, 4), size: 0.02, life: rand(0.2, 0.5), stretch: 0.02, frame: 1, r: 1, g: 0.75, b: 0.35, alpha: 1, alpha1: 0.3, grav: 9.8 });
+      for (let k = 0; k < 10; k++) FX.alpha.spawn({ x: c.x, y: c.y, z: c.z, vx: rand(-3, 3), vy: rand(1, 4), vz: rand(-3, 3), size: rand(0.06, 0.14), life: rand(1.5, 2.5), frame: 3, r: 0.2, g: 0.3, b: 0.45, alpha: 1, alpha1: 1, grav: 12, bounce: true, floor: fl });
+    }
+  },
+  blast(pos, R, dmg, by) {
+    for (const o of World.breakables) { if (!o.alive) continue; const d = o.center.distanceTo(pos); if (d < R) this.hit(o, dmg * (1 - d / R) + 1, by, null); }
+    for (const w of World.windows) if (!w.broken && _v1.set(w.axis === 'x' ? w.mid : w.k, (w.y0 + w.y1) / 2, w.axis === 'x' ? w.k : w.mid).distanceTo(pos) < R * 0.8) this.breakWindow(w);
+  },
+  window(x, y, z) {
+    for (const w of World.windows) {
+      if (w.broken || y < w.y0 - 0.05 || y > w.y1 + 0.05) continue;
+      if (w.axis === 'x' ? (Math.abs(z - w.k) < 0.15 && Math.abs(x - w.mid) < w.w / 2 + 0.05) : (Math.abs(x - w.k) < 0.15 && Math.abs(z - w.mid) < w.w / 2 + 0.05)) { this.breakWindow(w); return true; }
+    }
+    return false;
+  },
+  breakWindow(w) {
+    w.broken = true; if (!MAT.windowBroken) MAT.windowBroken = Destr.brokenMat();
+    w.mesh.material = MAT.windowBroken;
+    const cx = w.axis === 'x' ? w.mid : w.k + w.dir * 0.05, cz = w.axis === 'x' ? w.k + w.dir * 0.05 : w.mid, cy = (w.y0 + w.y1) / 2, fl = World.heightAt(cx + (w.axis === 'z' ? w.dir : 0), cz + (w.axis === 'x' ? w.dir : 0), cy);
+    Sound.glass(_v1.set(cx, cy, cz));
+    for (let k = 0; k < 30; k++) {
+      const a = rand(-0.5, 0.5) * w.w, h = rand(-0.5, 0.5) * (w.y1 - w.y0), n = rand(0.5, 2.5) * w.dir;
+      FX.alpha.spawn({ x: cx + (w.axis === 'x' ? a : 0), y: cy + h, z: cz + (w.axis === 'x' ? 0 : a), vx: w.axis === 'z' ? n : rand(-0.8, 0.8), vy: rand(-0.5, 1.5), vz: w.axis === 'x' ? n : rand(-0.8, 0.8), size: rand(0.02, 0.06), life: rand(1, 2), frame: 3, r: 0.75, g: 0.88, b: 0.95, alpha: 0.9, alpha1: 0.7, grav: 12, bounce: true, floor: fl, rv: rand(-12, 12) });
+    }
+  },
+  brokenMat() {
+    const c = makeCanvas(128, 128), x = c.getContext('2d'), R = mulberry32(9);
+    const g = x.createLinearGradient(0, 0, 0, 128); g.addColorStop(0, '#15171b'); g.addColorStop(1, '#07080a'); x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    x.fillStyle = 'rgba(170,205,225,0.55)';
+    for (let k = 0; k < 14; k++) { const side = k % 4, t = R() * 128, L = 10 + R() * 30; x.beginPath(); if (side === 0) { x.moveTo(t - 8, 0); x.lineTo(t + 8, 0); x.lineTo(t + (R() - 0.5) * 10, L); } else if (side === 1) { x.moveTo(t - 8, 128); x.lineTo(t + 8, 128); x.lineTo(t, 128 - L); } else if (side === 2) { x.moveTo(0, t - 8); x.lineTo(0, t + 8); x.lineTo(L, t); } else { x.moveTo(128, t - 8); x.lineTo(128, t + 8); x.lineTo(128 - L, t); } x.fill(); }
+    x.strokeStyle = '#5a4a3a'; x.lineWidth = 8; x.strokeRect(0, 0, 128, 128);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return new THREE.MeshStandardMaterial({ map: t, roughness: 0.4, metalness: 0.2 });
+  },
+};
+WEAPONS.barrel = { id: 'barrel', name: 'Взрыв бочки', kind: 'explosion', slot: 0, reward: 300, nonBuy: true };
+Sound.breakWood = function (pos) { const o = this.out(pos, { gain: 0.9, rev: 0.3 }); if (!o) return; const t = this.t; this.noise(o, t, 0.25, { type: 'lowpass', f: 1200, f2: 300, gain: 1.2 }); for (let k = 0; k < 5; k++) { this.tone(o, t + k * 0.04, 0.08, { f: 180 + Math.random() * 160, f2: 90, gain: 0.35, type: 'triangle' }); this.noise(o, t + k * 0.05, 0.05, { f: 900 + Math.random() * 900, q: 2, gain: 0.6 }); } };
+Sound.glass = function (pos) { const o = this.out(pos, { gain: 0.8, rev: 0.4 }); if (!o) return; const t = this.t; this.noise(o, t, 0.2, { type: 'highpass', f: 3500, gain: 1 }); for (let k = 0; k < 9; k++) this.tone(o, t + Math.random() * 0.4, 0.12, { f: 2500 + Math.random() * 4000, gain: 0.12 }); };
+
+// ------------------------------------------------------------ ladders, ziplines, things on the roofs
+World.addExtras = function () {
+  MAT.ladder = MAT.ladder || new THREE.MeshStandardMaterial({ color: 0x5b5f63, roughness: 0.5, metalness: 0.7 });
+  const lg = gb('ladder');
+  for (const [c, r] of MAP.ladders || []) {
+    let dc = 0, dr = 0, top = 0; // climb the tallest wall next to this cell
+    for (const [ec, er] of [[0, -1], [0, 1], [1, 0], [-1, 0]]) { const n = this.cell(c + ec, r + er); if (!n) continue; const h = n.wall ? n.wallH : n.arch ? n.archTop : 0; if (h > top) { top = h; dc = ec; dr = er; } }
+    if (!top) continue;
+    const x = cellX(c), z = cellZ(r), fx = x + dc * 1, fz = z + dr * 1; // wall face position
+    const L = { dc, dr, top, x0: dc ? Math.min(fx, fx - dc * 0.7) : x - 0.55, x1: dc ? Math.max(fx, fx - dc * 0.7) : x + 0.55, z0: dr ? Math.min(fz, fz - dr * 0.7) : z - 0.55, z1: dr ? Math.max(fz, fz - dr * 0.7) : z + 0.55 };
+    this.ladders.push(L);
+    const off = 0.12, px = fx - dc * off, pz = fz - dr * off, H = top + 0.9;
+    for (const s of [-0.32, 0.32]) { const ax = dr ? px + s : px, az = dc ? pz + s : pz; boxGeo(lg, ax - 0.03, 0, az - 0.03, ax + 0.03, H, az + 0.03); }
+    for (let y = 0.3; y < top + 0.1; y += 0.32) { if (dr) boxGeo(lg, px - 0.32, y - 0.02, pz - 0.02, px + 0.32, y + 0.02, pz + 0.02); else boxGeo(lg, px - 0.02, y - 0.02, pz - 0.32, px + 0.02, y + 0.02, pz + 0.32); }
+  }
+  for (const [[c0, r0], [c1, r1]] of MAP.zips || []) {
+    const ax = cellX(c0), az = cellZ(r0), bx = cellX(c1), bz = cellZ(r1);
+    const a = V3(ax, this.heightAt(ax, az) + 2.4, az), b = V3(bx, this.heightAt(bx, bz) + 2.4, bz), mid = a.clone().lerp(b, 0.5); mid.y -= Math.min(1.2, a.distanceTo(b) * 0.03);
+    const curve = new THREE.QuadraticBezierCurve3(a, mid, b), geo = new THREE.TubeGeometry(curve, 24, 0.025, 5, false); gb('cable').addGeometry(geo, new THREE.Matrix4(), 1); geo.dispose();
+    for (const p of [a, b]) { const h0 = this.heightAt(p.x, p.z); boxGeo(gb('ladder'), p.x - 0.06, h0, p.z - 0.06, p.x + 0.06, p.y + 0.35, p.z + 0.06); boxGeo(gb('ladder'), p.x - 0.3, p.y + 0.05, p.z - 0.05, p.x + 0.3, p.y + 0.12, p.z + 0.05); this.addSolid(p.x - 0.08, h0, p.z - 0.08, p.x + 0.08, p.y + 0.3, p.z + 0.08, 'metal', 0, 'metal'); }
+    const pts = curve.getSpacedPoints(40); this.zips.push({ curve, pts, len: curve.getLength(), a, b });
+  }
+  MAT.cable = MAT.cable || new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 });
+  for (const [c, r, type] of MAP.roofDeco || []) {
+    const x = cellX(c), z = cellZ(r), y = this.heightAt(x, z);
+    if (type === 'ac') { boxGeo(gb('stoneDark'), x - 0.65, y, z - 0.45, x + 0.65, y + 0.9, z + 0.45, { world: true, col: 0.9 }); boxGeo(gb('ladder'), x - 0.5, y + 0.9, z - 0.35, x + 0.5, y + 0.95, z + 0.35); this.addSolid(x - 0.65, y, z - 0.45, x + 0.65, y + 0.9, z + 0.45, 'metal', 0, 'metal'); }
+    else if (type === 'cover') { boxGeo(gb('crateMil'), x - 1.0, y, z - 0.25, x + 1.0, y + 0.95, z + 0.25); this.addSolid(x - 1.0, y, z - 0.25, x + 1.0, y + 0.95, z + 0.25, 'wood', 1); }
+    else if (type === 'tank') {
+      for (const [lx, lz] of [[-0.6, -0.6], [0.6, -0.6], [-0.6, 0.6], [0.6, 0.6]]) boxGeo(gb('ladder'), x + lx - 0.05, y, z + lz - 0.05, x + lx + 0.05, y + 1.0, z + lz + 0.05);
+      const geo = new THREE.CylinderGeometry(0.9, 0.9, 1.5, 18); gb(MAP.snow ? 'barrel' : 'barrelRed').addGeometry(geo, new THREE.Matrix4().makeTranslation(x, y + 1.75, z), 1); geo.dispose();
+      this.addSolid(x - 0.85, y + 1.0, z - 0.85, x + 0.85, y + 2.5, z + 0.85, 'metal', 0, 'metal'); this.addSolid(x - 0.7, y, z - 0.7, x + 0.7, y + 1.0, z + 0.7, 'metal', 0, 'metal');
+    }
+  }
+};
+const Climb = {
+  ride: null,
+  reset() { this.ride = null; },
+  // returns true when it moved the player itself (zipline); ladders only tweak velocity and let normal collision run
+  control(p, dt, f, r, typing) {
+    if (this.ride) return this.zip(p, dt, typing);
+    if (!typing && Input.hit('KeyE')) { const z = this.nearZip(p); if (z) { this.attach(p, z); return true; } }
+    p.climbing = false;
+    for (const L of World.ladders) {
+      if (p.pos.x < L.x0 - 0.3 || p.pos.x > L.x1 + 0.3 || p.pos.z < L.z0 - 0.3 || p.pos.z > L.z1 + 0.3 || p.pos.y > L.top + 0.6) continue;
+      if (p.onGround && f <= 0) continue;
+      p.climbing = true;
+      if (!typing && Input.hit('Space')) { p.climbing = false; p.vel.set(-L.dc * 3.5, 3.5, -L.dr * 3.5); p.onGround = false; return false; }
+      const up = f > 0 ? 1 : f < 0 ? -1 : 0;
+      p.vel.y = up * 3.4; p.vel.x *= 0.5; p.vel.z *= 0.5;
+      if (p.pos.y > L.top - 0.15 && up > 0) { p.vel.x = L.dc * 3; p.vel.z = L.dr * 3; p.vel.y = 2.6; }
+      if (up && (this.stepT = (this.stepT || 0) - dt) < 0) { this.stepT = 0.33; Sound.impact(p.pos, 'metal'); }
+      break;
+    }
+    return false;
+  },
+  nearZip(p) {
+    const e = p.eye(_v1); let best = null, bd = 1.9;
+    for (const z of World.zips) for (let i = 0; i < z.pts.length; i++) { const d = z.pts[i].distanceTo(e); if (d < bd) { bd = d; best = { z, t: i / (z.pts.length - 1) }; } }
+    return best;
+  },
+  attach(p, near) {
+    const { z, t } = near, tan = z.curve.getTangentAt(t), f = p.forward(_v2);
+    this.ride = { z, t: clamp(t, 0.04, 0.96), dir: tan.x * f.x + tan.z * f.z >= 0 ? 1 : -1 }; p.zoom = 0; Sound.mech('in'); p.climbing = false;
+  },
+  zip(p, dt, typing) {
+    const R = this.ride, z = R.z, sp = 12;
+    R.t += R.dir * sp * dt / z.len;
+    const done = R.dir > 0 ? R.t >= 0.97 : R.t <= 0.03; R.t = clamp(R.t, 0.03, 0.97);
+    const pt = z.curve.getPointAt(R.t), tan = z.curve.getTangentAt(R.t).multiplyScalar(R.dir);
+    p.pos.set(pt.x, pt.y - 2.05, pt.z); p.vel.copy(tan).multiplyScalar(sp); p.onGround = false; p.jumped = true;
+    if ((this.whT = (this.whT || 0) - dt) < 0) { this.whT = 0.12; const o = Sound.out(null, { gain: 0.12 }); if (o) Sound.noise(o, Sound.t, 0.14, { f: 2600, q: 4, gain: 0.5 }); }
+    if (done || (!typing && Input.hit('Space'))) { this.ride = null; p.vel.multiplyScalar(0.5); p.vel.y = Math.max(p.vel.y, 2); }
+    return true;
+  },
+};
+
+// =====================================================================
+// BATTLE ROYALE — everyone for themselves, loot on the floor, a shrinking zone
+// =====================================================================
+const isBR = () => Game.cfg.mode === 'br';
+function foe(a, b) { return a !== b && (Game.cfg.mode === 'br' || a.team !== b.team); }
+const BR_LOOT = ['p18', 'k45', 'tec9', 'five', 'deagle', 'p18', 'k45', 'vp9', 'ump', 'p90', 'vp9', 'sg12', 'auto12', 'galil', 'famas', 'ak', 'm4', 'ak', 'm4', 'scout', 'm249', 'awp', 'rpg', 'minigun', 'taser'];
+const BR_ITEMS = ['vest', 'vest', 'helm', 'med', 'med', 'med', 'he', 'flash', 'smoke', 'molotov'];
+const BR_STAGES = [ // wait, shrink time, target radius, damage per second outside
+  { wait: 45, shrink: 25, r: 40, dps: 2 }, { wait: 30, shrink: 22, r: 24, dps: 4 }, { wait: 25, shrink: 20, r: 12, dps: 7 }, { wait: 20, shrink: 25, r: 3, dps: 12 }, { wait: 999, shrink: 1, r: 3, dps: 20 },
+];
+Drops.place = function (id, x, z) {
+  const w = makeWeapon(id), mesh = worldWeaponModel(id); scene.add(mesh);
+  const y = World.heightAt(x, z, 1.2) + 0.04, d = { w, id, mesh, pos: V3(x, y, z), vel: V3(), rest: true, t: 0, yaw: rand(0, TAU) };
+  this.list.push(d); mesh.position.copy(d.pos); mesh.rotation.set(0, d.yaw, Math.PI / 2); return d;
+};
+const BR = {
+  zone: null, items: [], total: 0, place: 0, ended: false,
+  start() {
+    const G = Game; Drops.clear(); Nades.clear(); FX.reset(); G.clearBombMesh(); G.timers = []; this.clearItems(); Climb.reset();
+    G.phase = 'live'; G.phaseT = 1e9; G.liveT = 0; G.round = 1; this.ended = false;
+    G.bomb = { state: 'none', carrier: null, drop: null, pos: null, site: null, timer: 0, mesh: null, beepT: 0, planter: null };
+    G.spectate = null; G.killerInfo = null; G.dealt = new Map();
+    const walk = World.cells.filter((c) => c.walk && c.floorH === 0 && !c.arch && !c.prop);
+    // spread everyone out: pick far-apart cells
+    const spots = [];
+    for (const a of G.actors) {
+      let best = null, bd = -1; for (let k = 0; k < 40; k++) { const c = choice(walk); let d = 99; for (const s of spots) d = Math.min(d, Math.hypot(s.c - c.c, s.r - c.r)); if (d > bd) { bd = d; best = c; } }
+      spots.push(best);
+      a.resetLoadout(true); a.slots[2] = null; a.curSlot = -1; a.select(3, true);
+      a.pos.set(cellX(best.c), 0, cellZ(best.r)); a.vel.set(0, 0, 0); a.yaw = rand(-Math.PI, Math.PI); a.pitch = 0; a.alive = true; a.hp = 100; a.armor = 0; a.helmet = false; a.money = 0;
+      a.crouching = false; a.crouchAmt = 0; a.flashT = 0; a.recP = a.recY = 0; a.shotIdx = 0; a.zoom = 0; a.damageBy.clear(); a.onGround = true; a.protectUntil = G.time + 3;
+      a.ensureModel(); a.model.reset(); a.model.setWeapon(a.weapon ? a.weapon.id : null); a.model.ghost(a === G.player); a.model.tag.visible = false;
+      if (a.ai) a.ai.reset();
+    }
+    // loot: guns lying around the whole map, plus armour, medkits and grenades
+    const nGuns = Math.round(G.actors.length * 3.2 + 8), nItems = Math.round(G.actors.length * 2.2 + 6);
+    for (let k = 0; k < nGuns; k++) { const c = choice(walk); Drops.place(choice(BR_LOOT), cellX(c.c) + rand(-0.6, 0.6), cellZ(c.r) + rand(-0.6, 0.6)); }
+    for (let k = 0; k < nItems; k++) { const c = choice(walk); this.addItem(choice(BR_ITEMS), cellX(c.c) + rand(-0.6, 0.6), cellZ(c.r) + rand(-0.6, 0.6)); }
+    // the zone starts covering everything
+    this.zone = { cx: rand(-8, 8), cz: rand(-8, 8), r: 66, stage: 0, state: 'wait', t: BR_STAGES[0].wait, from: null, to: null, tick: 0 };
+    this.pickNext(); this.total = G.actors.length; this.place = 0;
+    if (!this.mesh) this.makeMesh(); this.mesh.visible = true;
+    const p = G.player; VM.set(p.weapon.id, p.team); HUD.slots(); HUD.bomb(); $('killer').classList.add('hidden');
+    HUD.roundStart(); Sound.radio();
+    HUD.big('Королевская битва', `${this.total} игроков · оружие лежит на карте · зона сужается`, 'neutral', 4);
+  },
+  pickNext() {
+    const Z = this.zone, S = BR_STAGES[Math.min(Z.stage, BR_STAGES.length - 1)], room = Math.max(0, Z.r - S.r);
+    for (let k = 0; k < 30; k++) { const a = rand(0, TAU), d = Math.sqrt(Math.random()) * room, x = Z.cx + Math.cos(a) * d, z = Z.cz + Math.sin(a) * d; if (Math.abs(x) < 36 && Math.abs(z) < 36) { Z.next = { cx: x, cz: z, r: S.r }; return; } }
+    Z.next = { cx: Z.cx, cz: Z.cz, r: S.r };
+  },
+  makeMesh() {
+    const g = new THREE.CylinderGeometry(1, 1, 70, 96, 1, true); g.translate(0, 30, 0);
+    const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide, uniforms: { time: { value: 0 } },
+      vertexShader: 'varying vec2 vUv; varying vec3 vW; void main(){ vUv = uv; vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }',
+      fragmentShader: 'varying vec2 vUv; varying vec3 vW; uniform float time; void main(){ float s = 0.5+0.5*sin(vW.y*3.0 - time*2.0 + vUv.x*400.0); float a = (0.16 + 0.12*s) * smoothstep(1.0, 0.0, vUv.y) ; gl_FragColor = vec4(0.25, 0.55, 1.0, a); }' });
+    this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = 5; scene.add(this.mesh);
+  },
+  addItem(type, x, z) {
+    const grp = new THREE.Group(), y = World.heightAt(x, z, 1.2);
+    if (type === 'vest' || type === 'helm') { part(grp, geoBox(0.42, type === 'helm' ? 0.2 : 0.48, 0.2), MAT.vestCT || MAT.olive, 0, type === 'helm' ? 0.12 : 0.26, 0); }
+    else if (type === 'med') { part(grp, geoBox(0.36, 0.22, 0.24), MAT.white || new THREE.MeshStandardMaterial({ color: 0xeeeeee }), 0, 0.11, 0); part(grp, geoBox(0.2, 0.06, 0.25), MAT.red, 0, 0.11, 0); part(grp, geoBox(0.06, 0.2, 0.25), MAT.red, 0, 0.11, 0); }
+    else { const m = worldWeaponModel(type); m.position.y = 0.12; grp.add(m); }
+    grp.position.set(x, y, z); scene.add(grp); this.items.push({ type, grp, pos: V3(x, y, z) });
+  },
+  clearItems() { for (const it of this.items) scene.remove(it.grp); this.items.length = 0; },
+  take(a, it) {
+    const t = it.type;
+    if (t === 'vest') { if (a.armor >= 100) return false; a.armor = 100; }
+    else if (t === 'helm') { if (a.helmet) return false; a.helmet = true; a.armor = Math.max(a.armor, 50); }
+    else if (t === 'med') { if (a.hp >= 100) return false; a.hp = Math.min(100, a.hp + 50); }
+    else if (a.give(t) === null) return false;
+    scene.remove(it.grp); this.items.splice(this.items.indexOf(it), 1);
+    if (a === Game.player) { Sound.ui('buy'); HUD.slots(); HUD.chat({ vest: 'Бронежилет', helm: 'Шлем', med: 'Аптечка: +50 HP' }[t] || 'Подобрано: ' + WEAPONS[t].name, 'sys'); }
+    return true;
+  },
+  inside(x, z, Z = this.zone) { return Math.hypot(x - Z.cx, z - Z.cz) <= Z.r; },
+  update(dt) {
+    const Z = this.zone; if (!Z) return;
+    this.mesh.material.uniforms.time.value = Game.time;
+    Z.t -= dt; const S = BR_STAGES[Math.min(Z.stage, BR_STAGES.length - 1)];
+    if (Z.state === 'wait' && Z.t <= 0) { Z.state = 'shrink'; Z.t = S.shrink; Z.from = { cx: Z.cx, cz: Z.cz, r: Z.r }; HUD.big('Зона сужается!', '', 'neutral', 2); Sound.radio(); }
+    else if (Z.state === 'shrink') {
+      const k = 1 - Math.max(0, Z.t) / S.shrink; Z.cx = lerp(Z.from.cx, Z.next.cx, k); Z.cz = lerp(Z.from.cz, Z.next.cz, k); Z.r = lerp(Z.from.r, Z.next.r, k);
+      if (Z.t <= 0) { Z.stage++; Z.state = 'wait'; const S2 = BR_STAGES[Math.min(Z.stage, BR_STAGES.length - 1)]; Z.t = S2.wait; this.pickNext(); }
+    }
+    this.mesh.position.set(Z.cx, 0, Z.cz); this.mesh.scale.set(Z.r, 1, Z.r);
+    Z.tick -= dt;
+    if (Z.tick <= 0) { Z.tick = 0.5; for (const a of Game.actors) if (a.alive && !this.inside(a.pos.x, a.pos.z)) applyDamage(a, null, S.dps * 0.5 + 0.5, 'zone', WEAPONS.zone, _v1.copy(a.pos), UP, false); }
+    // items: walk over to pick up
+    for (const it of this.items.slice()) { it.grp.rotation.y += dt * 1.5; for (const a of Game.actors) if (a.alive && Math.hypot(a.pos.x - it.pos.x, a.pos.z - it.pos.z) < 0.9 && Math.abs(a.pos.y - it.pos.y) < 1.2) { if (this.take(a, it)) break; } }
+    const p = Game.player; $('zoneFx').style.opacity = p && p.alive && !this.inside(p.pos.x, p.pos.z) ? '1' : '0';
+  },
+  alive() { return Game.actors.filter((a) => a.alive).length; },
+  onDeath(v, att) {
+    if (this.ended) return;
+    const left = this.alive();
+    if (v === Game.player) { this.place = left + 1; Game.after(4.5, () => this.finish(false)); HUD.big(`#${this.place} место`, att && att !== v ? `вас убил ${att.name}` : 'зона', 'neutral', 3); }
+    else if (left === 1 && Game.player.alive) { this.place = 1; HUD.big('Победа!', 'Вы последний выживший', 'neutral', 4); Sound.stinger(Game.player.team, true); Game.after(3.5, () => this.finish(true)); }
+    else if (Game.player.alive && Math.random() < 0.6) HUD.chat(`Осталось игроков: ${left}`, 'sys');
+  },
+  finish(win) { if (this.ended) return; this.ended = true; Game.phase = 'over'; UI.showEnd(win); },
+  stop() { if (this.mesh) this.mesh.visible = false; this.clearItems(); this.zone = null; $('zoneFx').style.opacity = '0'; },
+};
+WEAPONS.zone = { id: 'zone', name: 'Зона', kind: 'explosion', slot: 0, reward: 0, nonBuy: true };
+
+// =====================================================================
 // BOOT & MAIN LOOP
 // =====================================================================
 let lastT = performance.now(), fpsAcc = 0, fpsN = 0;
@@ -5033,7 +5512,7 @@ async function boot() {
   const progress = (f, msg) => { bar.style.width = (clamp(f, 0, 1) * 100).toFixed(0) + '%'; if (msg) txt.textContent = msg; };
   try {
     progress(0.02, 'Запуск графики…'); await nextFrame();
-    initRenderer();
+    initRenderer(); Env.init();
     await buildTextures((f, m) => progress(0.05 + f * 0.68, m));
     progress(0.76, 'Строим карту de_dune…'); await nextFrame();
     World.parse(); World.build(); Nav.build();
@@ -5069,10 +5548,10 @@ function loop(now) {
   fpsAcc += dt; fpsN++; if (fpsAcc > 0.5) { $('fps').textContent = Math.round(fpsN / fpsAcc) + ' FPS'; fpsAcc = 0; fpsN = 0; }
   try {
     if (Game.state === 'playing' && !Game.paused) {
-      Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt);
+      Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); Env.update(dt);
       const p = Game.player; if (p && p.alive) VM.update(dt, p);
       HUD.update(dt);
-    } else if (Game.state === 'menu') { Game.menuCamera(dt); FX.update(dt); }
+    } else if (Game.state === 'menu') { Game.menuCamera(dt); FX.update(dt); Env.update(dt); }
     skyMesh.material.uniforms.time.value = now / 1000;
     const showLock = Game.state === 'playing' && !Game.paused && !UI.cursorWanted() && !Input.locked && !Input.fallback;
     $('lockhint').classList.toggle('hidden', !showLock);
@@ -5087,7 +5566,7 @@ function render() {
   if (Game.state === 'playing' && p && ((p.alive && !p.scoped) || (Killcam.active && Killcam.vmWeapon)) && VM.cur && VM.cur.group.visible) { renderer.clearDepth(); renderer.render(vmScene, vmCamera); }
 }
 // handle for automated checks and tinkering from the console
-window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Profile, Skins, Killcam, Secret, Rockets, MAP: () => MAP, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, get camera() { return camera; }, get renderer() { return renderer; } };
+window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); Env.update(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Profile, Skins, Killcam, Secret, Rockets, Env, BR, Destr, Climb, MAP: () => MAP, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, get camera() { return camera; }, get renderer() { return renderer; } };
 boot();
 </script>
 
