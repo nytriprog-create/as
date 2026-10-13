@@ -5118,6 +5118,7 @@ const UI = {
     q.querySelector('select').addEventListener('change', (e) => { Settings.quality = e.target.value; saveSettings(); qn.innerHTML = 'Сохранено. <button class="ghost" style="display:inline-block;margin:6px 0 0;padding:4px 10px" id="reloadBtn">Перезагрузить сейчас</button>'; $('reloadBtn').onclick = () => location.reload(); });
     check('post', 'Свечение и цветокоррекция (не на низком качестве)'); range('bloom', 'Сила свечения', 0, 1.2, 0.05, (v) => Math.round(v * 100) + '%');
     if (Touch.on) range('touchSens', 'Чувствительность пальца', 0.3, 3, 0.05, (v) => (+v).toFixed(2));
+    if (Touch.on) check('touchInvert', 'Обратный обзор пальцем по вертикали');
     check('showFps', 'Показывать FPS'); check('blood', 'Кровь и брызги'); check('radarRotate', 'Радар поворачивается вместе с игроком');
     h('Звук');
     range('volume', 'Громкость', 0, 1, 0.01, (v) => Math.round(v * 100) + '%', () => Sound.setVolume());
@@ -5849,7 +5850,7 @@ const Touch = {
         continue;
       }
       const d = this.drag && this.drag[t.identifier];
-      if (d) { const s = 2.4 * (Settings.touchSens || 1); Input.dx += (t.clientX - d.x) * s; Input.dy += (t.clientY - d.y) * s; d.x = t.clientX; d.y = t.clientY; }
+      if (d) { const s = 2.4 * (Settings.touchSens || 1); Input.dx += (t.clientX - d.x) * s; Input.dy -= (t.clientY - d.y) * s * (Settings.touchInvert ? -1 : 1); d.x = t.clientX; d.y = t.clientY; }
     }
   },
   end(e) {
