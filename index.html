@@ -1701,6 +1701,7 @@ const MAPS = {
     menuPath: [[-1, 3.2, 35], [0, 3.4, 26], [0, 3.6, 10], [0, 3.6, -8], [10, 4.4, -12], [18, 4.2, -17], [27, 3.8, -28], [35, 3.6, -14], [34, 3.4, 6], [34, 2.6, 19], [34, 1.95, 26], [33, 2.8, 32], [20, 3.2, 35], [8, 3.2, 37]],
     train: { player: [38.5, 33, 0], area: [36, 41, 14, 28] },
     ladders: [[20, 9, 'n'], [16, 36, 'n'], [33, 13, 's'], [3, 13, 's'], [18, 31, 'w']],
+    roofSpots: [[0, 21.5, 11, [[21.5, 20], [21.5, 28], [22, 15]], 'CT'], [2, 33.5, 15.5, [[38.5, 24], [38.5, 31], [36, 10]], 'CT'], [3, 3, 16.5, [[6, 8], [6, 18], [10, 11]], 'CT'], [1, 16.5, 34.5, [[21.5, 30], [21.5, 24], [11, 38]], 'T'], [4, 15.5, 30.5, [[21.5, 30], [21.5, 22], [22, 35]], 'any']],
     zips: [[[10, 16], [14.5, 4]], [[33, 16], [28.5, 8]], [[27, 30], [16, 30]], [[14, 35], [27, 35]]],
     roofDeco: [[10, 18, 'tank'], [12, 15, 'cover'], [14.5, 7, 'ac'], [32, 17, 'cover'], [29, 9.5, 'ac'], [28, 31, 'tank'], [16, 33, 'ac'], [26, 35.5, 'cover'], [21.5, 11, 'ac']],
     theme: {}, sky: { zen: [0.11, 0.29, 0.66], hor: [0.78, 0.77, 0.72], gnd: [0.70, 0.62, 0.50], cloud: 0.52, fog: 0xd9cdb4, fogNear: 70, fogFar: 520, sun: 0xfff0d8, sunI: 3.1, hemiSky: 0xc4d8f5, hemiGnd: 0x9a7f5e, hemiI: 1.05, envGnd: 0x8a7556 },
@@ -1714,6 +1715,7 @@ const MAPS = {
     menuPath: [[-33, 3.4, -1], [-20, 3.6, -5], [-4, 3.6, -5], [0, 3.8, -12], [0, 4, -27], [13, 3.8, -29], [24, 3.6, -26], [32, 3.6, -14], [33, 3.6, 0], [32, 3.6, 16], [20, 3.6, 25], [4, 3.6, 30], [-18, 1.9, 30], [-25, 1.9, 30], [-35, 3.2, 22], [-35, 3.4, 10]],
     train: { player: [10, 21.5, -Math.PI / 2], area: [14, 33, 19, 24] },
     ladders: [[18, 20, 's'], [6, 12, 'e'], [6, 28, 'e'], [36, 14, 'w']],
+    roofSpots: [[0, 21.5, 21.5, [[5, 21.5], [38, 21.5], [21.5, 15]], 'any'], [1, 9, 12.5, [[5, 7], [5, 16], [19, 7]], 'T'], [2, 9, 28.5, [[5, 33], [5, 24], [20, 34]], 'T'], [3, 33, 14.5, [[38, 8], [38, 20], [28, 8]], 'CT']],
     zips: [[[11, 14], [19, 21.5]], [[25, 21.5], [30, 14]], [[13, 27], [22, 22]], [[30, 27], [31, 15]]],
     roofDeco: [[20.5, 22, 'ac'], [24, 21, 'tank'], [10, 15, 'cover'], [12, 13, 'ac'], [32, 16, 'tank'], [14, 28.5, 'ac'], [29, 28.5, 'cover']],
     theme: { sand: 'snow', sandstone: 'concrete', stoneDark: 'concreteDark', plaster: 'plasterCold', plaster2: 'plasterCold', tiles: 'tilesCold', tilesDark: 'concreteDark', sandFar: 'snowFar' },
@@ -3553,7 +3555,7 @@ function moveActor(a, wx, wz, jump, dt) {
   if (a.onGround) {
     if (jump && Game.phase !== 'freeze' && !a.planting && !a.defusing) {
       const tired = (a.stamina ?? 100) < STAM.jump; v.y = PHYS.jump * (tired ? 0.78 : 1); a.onGround = false; a.jumped = true;
-      a.stamina = Math.max(0, (a.stamina ?? 100) - STAM.jump); a.stamUsed = Game.time;
+      a.stamina = Math.max(0, (a.stamina ?? 100) - (a.isBot ? 5 : STAM.jump)); a.stamUsed = Game.time;
       if (Math.random() < 0.6) Game.noise(a.pos, 10, a, 'step');
     } else {
       const sp = Math.hypot(v.x, v.z);
@@ -3645,7 +3647,7 @@ function inaccuracy(a, w) {
   if (a.flashT > 0.5) v += 0.05;
   if (d.bipod && bipodOn(a)) v *= 0.3;
   if (a.ads) v *= 0.55;
-  if (a.isPlayer && (a.stamina ?? 100) < 50) v += (50 - a.stamina) / 50 * 0.018; // out of breath: shaky aim
+  if ((a.stamina ?? 100) < 50) v += (50 - a.stamina) / 50 * (a.isPlayer ? 0.018 : 0.008); // out of breath: shaky aim
   return v;
 }
 function muzzleWorld(a, out) {
@@ -3985,10 +3987,10 @@ const Drops = {
 // BOTS — A* navigation, perception, aiming, round tactics
 // =====================================================================
 const DIFF = [
-  { name: 'Новичок', react: [0.55, 0.95], aimSpeed: 2.6, err: 5.0, settle: 1.1, hs: 0.1, spray: 0.15, fov: 65, burst: 3 },
-  { name: 'Боец', react: [0.32, 0.6], aimSpeed: 4.3, err: 3.0, settle: 1.8, hs: 0.22, spray: 0.45, fov: 72, burst: 5 },
-  { name: 'Ветеран', react: [0.22, 0.4], aimSpeed: 6.5, err: 1.8, settle: 2.6, hs: 0.36, spray: 0.7, fov: 78, burst: 8 },
-  { name: 'Профи', react: [0.14, 0.27], aimSpeed: 10, err: 1.0, settle: 3.6, hs: 0.52, spray: 0.9, fov: 84, burst: 12 },
+  { name: 'Новичок', react: [0.45, 0.8], aimSpeed: 3.2, err: 4.0, settle: 1.4, hs: 0.14, spray: 0.25, fov: 68, burst: 4 },
+  { name: 'Боец', react: [0.24, 0.45], aimSpeed: 5.4, err: 2.2, settle: 2.4, hs: 0.3, spray: 0.62, fov: 76, burst: 6 },
+  { name: 'Ветеран', react: [0.16, 0.3], aimSpeed: 8.2, err: 1.3, settle: 3.3, hs: 0.45, spray: 0.82, fov: 82, burst: 10 },
+  { name: 'Профи', react: [0.1, 0.19], aimSpeed: 12.5, err: 0.7, settle: 4.6, hs: 0.62, spray: 0.95, fov: 88, burst: 14 },
 ];
 const BOT_NAMES = ['Сокол', 'Бурый', 'Шмель', 'Кобра', 'Тайфун', 'Грач', 'Лис', 'Барс', 'Дрозд', 'Ястреб', 'Вепрь', 'Кедр', 'Гром', 'Шторм', 'Мангуст', 'Филин', 'Рысь', 'Сыч'];
 const cw = (p) => V3(cellX(p[0]), 0, cellZ(p[1])); // cell coords (fractions allowed) to world
@@ -4067,7 +4069,7 @@ class BotAI {
     this.aimErrY = 0; this.aimErrP = 0; this.engageT = 0; this.stuckT = 0; this.lastPos = V3(); this.progressT = 0; this.strafe = 0; this.strafeT = 0;
     this.burstLeft = 0; this.burstPause = 0; this.holdT = 0; this.lookAt = null; this.watchT = 0; this.headAim = false; this.mode = 'idle'; this.thinkT = 0; this.crouchHold = false;
     this.wantNade = 0; this.desiredYaw = this.a.yaw; this.desiredPitch = 0; this.saidSpot = -99; this.via = null;
-    this.usedSmoke = false; this.usedFlash = false; this.viaReachedT = 0; this.pausePath = false; this.helped = 0; this.usedFire = false; this.retreatUntil = 0;
+    this.usedSmoke = false; this.usedFlash = false; this.viaReachedT = 0; this.pausePath = false; this.helped = 0; this.usedFire = false; this.retreatUntil = 0; this.roof = null; this.roofTask = null; if (this.a) this.a.climbing = false;
   }
   onDamaged(att) {
     if (!this.target || !this.visible) { this.alertPos = att.pos.clone(); this.alertT = Game.time; this.lookAt = att.eye(V3()); }
@@ -4171,21 +4173,22 @@ class BotAI {
       if (dist > 24 && w && (w.def.kind === 'rifle' || w.def.kind === 'smg')) { if (!this.crouchHold && Math.random() < 0.01) this.crouchHold = true; } else this.crouchHold = false;
       crouch = this.crouchHold;
       // grenade at a distant enemy
-      if (!this.nadeMode && dist > 12 && dist < 30 && Math.random() < 0.005 && w && w.def.kind !== 'sniper') { const g = a.slots[4].find((x) => x.id === 'he' || WEAPONS[x.id].nade === 'fire'); if (g) this.startNade(g.id, tgt.pos); }
+      if (!this.nadeMode && !this.roof && dist > 12 && dist < 30 && Math.random() < 0.008 && w && w.def.kind !== 'sniper') { const g = a.slots[4].find((x) => x.id === 'he' || WEAPONS[x.id].nade === 'fire'); if (g) this.startNade(g.id, tgt.pos); }
       if (w && w.def.kind === 'knife' && dist < 2.1) fire = true;
       if (a.slots[6] && a.slots[6].ammo > 0 && dist < 4 && a.curSlot !== 6 && Math.random() < 0.08) a.select(6);
       if (w && w.def.zap && dist < 4.2 && now - w.drawStart > 0.4) fire = true;
     } else {
       // ------------------------------------------------ objectives
-      if (retreating) { this.mode = 'move'; a.walking = false; if (w && w.def.mag && w.ammo < w.def.mag && !w.reloading && w.reserve > 0) startReload(a); }
-      else if (tgt && now - this.lastSeenT < 6 && this.lastSeen) {
+      if (this.roof && this.roof.stage !== 'toLadder') { /* roofStep drives movement and looking */ }
+      else if (retreating) { this.mode = 'move'; a.walking = false; if (w && w.def.mag && w.ammo < w.def.mag && !w.reloading && w.reserve > 0) startReload(a); }
+      else if (tgt && now - this.lastSeenT < 6 && this.lastSeen && !this.roof) {
         this.mode = 'hunt';
         if (!this.goal || this.goalKind !== 'hunt' || this.goal.distanceTo(this.lastSeen) > 3) this.setGoal(this.lastSeen, 'hunt');
         a.walking = Math.random() < 0.3;
       } else {
         if (this.target && now - this.lastSeenT >= 6) this.target = null;
         const F = Game.fightAt; // a teammate nearby is in a fight: go and help
-        if (F && !isBR() && F.team === a.team && now - F.t < 1.5 && F.by !== a && this.helped !== F.t && !a.hasBomb() && this.mode !== 'defuse' && this.mode !== 'plant' && a.pos.distanceTo(F.pos) < 26 && Math.random() < 0.5) {
+        if (F && !isBR() && !this.roof && F.team === a.team && now - F.t < 1.5 && F.by !== a && this.helped !== F.t && !a.hasBomb() && this.mode !== 'defuse' && this.mode !== 'plant' && a.pos.distanceTo(F.pos) < 26 && Math.random() < 0.5) {
           this.helped = F.t; this.lookAt = F.pos.clone().add(_v3.set(0, 1.4, 0)); this.alertT = now; this.lastSeen = F.pos.clone(); this.lastSeenT = now - 2; this.pausePath = false;
           this.setGoal(F.pos, 'hunt'); if (Math.random() < 0.4) Game.radio(a, 'Иду на помощь!');
         }
@@ -4204,6 +4207,12 @@ class BotAI {
       this.desiredYaw = lookYaw; this.turn(dt, lookYaw, lookPitch, 0.55);
       crouch = this.mode === 'plant' || this.mode === 'defuse' && Math.random() < 0.0;
     }
+    if (this.roof) { const r = this.roofStep(dt, !!(tgt && this.visible)); if (r) { wx = r.x; wz = r.z; jump = false; if (r.crouch !== undefined) crouch = r.crouch; } }
+    else a.climbing = false;
+    // sprint between fights, like the player (costs stamina, no shooting while running)
+    const mv2 = Math.hypot(wx, wz);
+    a.sprinting = mv2 > 0.5 && !(tgt && this.visible) && !a.walking && !crouch && !this.nadeMode && !a.exhausted && (a.stamina ?? 100) > (a.sprinting ? 5 : 45)
+      && (this.mode === 'move' || this.mode === 'hunt') && now - this.alertT > 1.2 && !(this.roof && this.roof.stage !== 'toLadder') && !(w && w.reloading && w.def.kind === 'sniper');
     if (this.nadeMode) { this.updateNade(dt); fire = false; }
     if (this.mode !== 'plant') a.planting = 0;
     if (this.mode !== 'defuse') a.defusing = 0;
@@ -4247,6 +4256,8 @@ class BotAI {
   // ---------------------------------------------------------- strategy per side
   objective(dt) {
     const a = this.a, now = Game.time, B = Game.bomb, plan = Game.plan;
+    if (this.roofTask != null) { const t = this.roofTask; this.roofTask = null; this.beginRoof(t); }
+    if (this.roof) { this.mode = 'move'; if (this.roof.stage === 'toLadder' && this.goalKind !== 'roof') this.setGoal(this.roof.L.entry, 'roof'); return; }
     if (isBR()) return this.brObjective();
     if (Game.cfg.mode === 'dm') { // deathmatch: hunt around the map
       if (!this.goal || this.goalKind !== 'roam' || this.arrived() || now > (this.roamT || 0)) {
@@ -4254,6 +4265,7 @@ class BotAI {
         if (en.length && Math.random() < 0.65) { const e = choice(en); pos = V3(e.pos.x + rand(-6, 6), 0, e.pos.z + rand(-6, 6)); }
         else { const c = choice(World.cells.filter((x) => x.walk)); pos = V3(cellX(c.c), c.floorH, cellZ(c.r)); }
         this.setGoal(pos, 'roam'); this.roamT = now + rand(6, 12);
+        if (Math.random() < 0.12) { const s = this.nearRoof(35); if (s >= 0) this.beginRoof(s); }
       }
       this.mode = 'move'; return;
     }
@@ -4324,6 +4336,70 @@ class BotAI {
         this.rotated = Game.siteAlarm.t; this.area = Game.siteAlarm.site; this.goalKind = ''; Game.radio(a, `Иду на помощь на ${this.area}!`);
       }
     }
+  }
+  // ---------------------------------------------------------- roofs: climb a ladder, hold a high spot, come back down
+  nearRoof(maxD) { let best = -1, bd = maxD; World.roofSpots.forEach((s, i) => { const d = this.a.pos.distanceTo(s.L.entry); if (d < bd && (!isBR() || (BR.zone && BR.inside(s.spot.x, s.spot.z, BR.zone.next || BR.zone)))) { bd = d; best = i; } }); return best; }
+  beginRoof(i) {
+    const S = World.roofSpots[i]; if (!S) return;
+    this.roof = { S, L: S.L, spot: S.spot.clone().add(V3(rand(-0.4, 0.4), 0, rand(-0.4, 0.4))), watch: S.watch, stage: 'toLadder', t: Game.time, wt: 0, look: S.watch[0], since: Game.time };
+    this.setGoal(S.L.entry, 'roof');
+  }
+  inLadder(L) { const p = this.a.pos; return p.x > L.x0 - 0.25 && p.x < L.x1 + 0.25 && p.z > L.z0 - 0.25 && p.z < L.z1 + 0.25; }
+  shouldLeaveRoof() {
+    const B = Game.bomb, a = this.a, now = Game.time;
+    if (Game.cfg.mode === 'bomb') return a.team === 'CT' && B.state === 'planted';
+    if (isBR() && BR.zone) { const N = BR.zone.next || BR.zone; if (!BR.inside(this.roof.spot.x, this.roof.spot.z, N) && (BR.zone.state === 'shrink' || BR.zone.t < 15)) return true; }
+    return now - this.lastSeenT > 30 && now - this.roof.since > 35;
+  }
+  roofStep(dt, inCombat) {
+    const R = this.roof, a = this.a, L = R.L, now = Game.time;
+    if (R.stage === 'toLadder') { // walk there on the nav grid, then line up with the ladder
+      const d = Math.hypot(L.entry.x - a.pos.x, L.entry.z - a.pos.z);
+      if (now - R.t > 40) { this.roof = null; return null; }
+      if (d < 1.6) { R.stage = 'climb'; R.t = now; }
+      else if (this.arrived() && d < 4) return { x: (L.entry.x - a.pos.x) / d, z: (L.entry.z - a.pos.z) / d };
+      return null;
+    }
+    if (R.stage === 'climb') {
+      if (now - R.t > 7) { this.roof = null; a.climbing = false; return null; }
+      if (!inCombat) this.turn(dt, Math.atan2(-L.dc, -L.dr), 0.4, 1.2);
+      if (!this.inLadder(L)) { const d = Math.hypot(L.entry.x - a.pos.x, L.entry.z - a.pos.z) || 1; a.climbing = false; return { x: (L.entry.x - a.pos.x) / d + L.dc * 0.3, z: (L.entry.z - a.pos.z) / d + L.dr * 0.3 }; }
+      a.climbing = true; a.vel.y = 3.4; a.vel.x *= 0.5; a.vel.z *= 0.5;
+      if (a.pos.y > L.top - 0.15) { a.vel.set(L.dc * 3, 2.6, L.dr * 3); a.climbing = false; R.stage = 'walk'; R.t = now; }
+      if (Math.random() < 0.08) Sound.impact(a.pos, 'metal');
+      return { x: L.dc * 0.4, z: L.dr * 0.4 };
+    }
+    a.climbing = false;
+    if (R.stage !== 'down' && a.onGround && a.pos.y < L.top - 1.5) { this.roof = null; return null; } // fell off somehow
+    if (R.stage === 'walk') {
+      const d = Math.hypot(R.spot.x - a.pos.x, R.spot.z - a.pos.z);
+      if (d < 0.45 || now - R.t > 8) { R.stage = 'hold'; R.since = now; if (Math.random() < 0.6) Game.radio(a, 'Я на крыше, прикрываю сверху.'); }
+      else return { x: (R.spot.x - a.pos.x) / d, z: (R.spot.z - a.pos.z) / d };
+    }
+    if (R.stage === 'hold') {
+      this.mode = 'hold';
+      if (!inCombat) {
+        R.wt -= dt; if (R.wt <= 0) { R.wt = rand(2, 5); R.look = choice(R.watch); }
+        const e = a.eye(_v1), lp = this.lookAt && now - this.alertT < 2.5 ? this.lookAt : _v2.set(R.look.x, 1, R.look.z);
+        this.turn(dt, Math.atan2(-(lp.x - e.x), -(lp.z - e.z)), Math.atan2(lp.y - e.y, Math.hypot(lp.x - e.x, lp.z - e.z)), 0.7);
+      }
+      if (this.shouldLeaveRoof()) { R.stage = 'down'; R.t = now; }
+      return { x: 0, z: 0, crouch: inCombat ? this.crouchHold || Math.random() < 0.02 : false };
+    }
+    if (R.stage === 'down') {
+      if (now - R.t > 12) { this.roof = null; return null; }
+      if (a.onGround && a.pos.y < 0.8 && ((a.pos.x - L.fx) * L.dc + (a.pos.z - L.fz) * L.dr) < -0.6) { this.roof = null; a.climbing = false; this.goalKind = ''; return null; } // back on the street
+      const out = (a.pos.x - L.fx) * L.dc + (a.pos.z - L.fz) * L.dr; // < 0: past the roof edge, over the ladder
+      if (out < -0.34 && a.pos.y < L.top + 0.6) {
+        if (a.pos.y > 0.5) { a.climbing = true; a.vel.y = -3.4; a.vel.x *= 0.3; a.vel.z *= 0.3; return { x: 0, z: 0 }; }
+        a.climbing = false; return { x: -L.dc, z: -L.dr }; // last rung: drop and step away
+      }
+      // on the roof: walk to the ladder and step over the edge
+      const tx = L.fx - L.dc * 0.6, tz = L.fz - L.dr * 0.6, d = Math.hypot(tx - a.pos.x, tz - a.pos.z) || 1;
+      if (!inCombat) this.turn(dt, Math.atan2(L.dc, L.dr), -0.3, 1);
+      return { x: (tx - a.pos.x) / d, z: (tz - a.pos.z) / d };
+    }
+    return null;
   }
   brObjective() {
     const a = this.a, now = Game.time, Z = BR.zone; if (!Z) return; this.mode = 'move';
@@ -4527,6 +4603,11 @@ const Game = {
     if (this.plan.site === 'A') this.plan.via = choice(MAP.via.A); else this.plan.via = Math.random() < 0.6 ? choice(MAP.via.B) : null;
     const tBots = ts.filter((a) => a.isBot); tBots.forEach((b, i) => { b.ai.ownVia = (i % 3 === 2 && this.plan.site === 'A') ? (this.plan.via === MAP.via.A[0] ? MAP.via.A[1] : MAP.via.A[0]) : null; });
     const areas = shuffle(['A', 'B', 'mid', 'A', 'B', 'A', 'B']); this.actors.filter((a) => a.team === 'CT' && a.isBot).forEach((b, i) => { b.ai.area = areas[i % areas.length]; });
+    for (const side of ['CT', 'T']) { // one bot per side may take a roof this round
+      const spots = World.roofSpots.map((s, i) => [s, i]).filter(([s]) => s.role === side || s.role === 'any'); if (!spots.length || Math.random() > (side === 'CT' ? 0.45 : 0.3)) continue;
+      const bots = this.actors.filter((b) => b.isBot && b.team === side && !b.hasBomb()); if (!bots.length) continue;
+      const b = bots.find((x) => x.slots[1] && x.slots[1].def.kind === 'sniper') || choice(bots); b.ai.roofTask = choice(spots)[1];
+    }
     this.timers = []; for (const a of this.actors) if (a.isBot) this.after(rand(0.3, 2.5), () => { if (this.phase === 'freeze' && a.alive) botBuy(a); });
     const p = this.player; if (p) { VM.set(p.weapon.id, p.team); HUD.bomb(); HUD.slots(); }
     HUD.roundStart(); Sound.radio();
@@ -5583,8 +5664,8 @@ World.breakable = function (cell, surf, hp, parts, o = {}) {
   obj.center.divideScalar(obj.boxes.length);
   this.group.add(grp); this.breakables.push(obj); return obj;
 };
-World.breakables = []; World.windows = []; World.ladders = []; World.zips = [];
-{ const r = World.reset; World.reset = function () { const out = r.call(this); this.breakables = []; this.windows = []; this.ladders = []; this.zips = []; return out; }; }
+World.breakables = []; World.windows = []; World.ladders = []; World.zips = []; World.roofSpots = [];
+{ const r = World.reset; World.reset = function () { const out = r.call(this); this.breakables = []; this.windows = []; this.ladders = []; this.zips = []; this.roofSpots = []; return out; }; }
 
 const Destr = {
   hit(obj, dmg, by, point) {
@@ -5667,7 +5748,7 @@ World.addExtras = function () {
     for (const [ec, er] of [[0, -1], [0, 1], [1, 0], [-1, 0]]) { const n = this.cell(c + ec, r + er); if (!n) continue; const h = n.wall ? n.wallH : n.arch ? n.archTop : 0; if (h > top) { top = h; dc = ec; dr = er; } }
     if (!top) continue;
     const x = cellX(c), z = cellZ(r), fx = x + dc * 1, fz = z + dr * 1; // wall face position
-    const L = { dc, dr, top, x0: dc ? Math.min(fx, fx - dc * 0.7) : x - 0.55, x1: dc ? Math.max(fx, fx - dc * 0.7) : x + 0.55, z0: dr ? Math.min(fz, fz - dr * 0.7) : z - 0.55, z1: dr ? Math.max(fz, fz - dr * 0.7) : z + 0.55 };
+    const L = { dc, dr, top, fx, fz, entry: V3(fx - dc * 0.35, 0, fz - dr * 0.35), x0: dc ? Math.min(fx, fx - dc * 0.7) : x - 0.55, x1: dc ? Math.max(fx, fx - dc * 0.7) : x + 0.55, z0: dr ? Math.min(fz, fz - dr * 0.7) : z - 0.55, z1: dr ? Math.max(fz, fz - dr * 0.7) : z + 0.55 };
     this.ladders.push(L);
     const off = 0.12, px = fx - dc * off, pz = fz - dr * off, H = top + 0.9;
     for (const s of [-0.32, 0.32]) { const ax = dr ? px + s : px, az = dc ? pz + s : pz; boxGeo(lg, ax - 0.03, 0, az - 0.03, ax + 0.03, H, az + 0.03); }
@@ -5681,6 +5762,9 @@ World.addExtras = function () {
     const pts = curve.getSpacedPoints(40); this.zips.push({ curve, pts, len: curve.getLength(), a, b });
   }
   MAT.cable = MAT.cable || new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.6 });
+  this.roofSpots = (MAP.roofSpots || []).filter(([li]) => this.ladders[li]).map(([li, c, r, watch, role]) => {
+    const x = cellX(c), z = cellZ(r); return { L: this.ladders[li], spot: V3(x, this.heightAt(x, z), z), watch: watch.map(([wc, wr]) => V3(cellX(wc), 0, cellZ(wr))), role: role || 'any' };
+  });
   this.addDeco();
   for (const [c, r, type] of MAP.roofDeco || []) {
     const x = cellX(c), z = cellZ(r), y = this.heightAt(x, z);
