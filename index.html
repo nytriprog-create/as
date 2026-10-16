@@ -2878,7 +2878,7 @@ const VM = {
       }
       if (P.sup) { P.sup.visible = !!(w.mods && w.mods.sil); P.dotS.visible = !!(w.mods && w.mods.dot); }
       if (P.warhead) P.warhead.visible = w.ammo > 0 || (w.reloading && now - w.reloadStart > def.reload * 0.55);
-      if (w.inspectT > 0) { const it = (now - w.inspectT) / inspectDur(def); if (it > 0 && it < 1) { const o = inspectPose(def, P, it, w, g); x += o.x; y += o.y; z += o.z; rx += o.rx; ry += o.ry; rz += o.rz; } else { w.inspectT = 0; inspectReset(P); } }
+      if (w.inspectT > 0) { const it = (now - w.inspectT) / inspectDur(def); if (it >= 0 && it < 1) { const o = inspectPose(def, P, it, w, g); x += o.x; y += o.y; z += o.z; rx += o.rx; ry += o.ry; rz += o.rz; } else { w.inspectT = 0; inspectReset(P); } }
     }
     if (pl.scoped) g.visible = false; else if (!def || def.kind !== 'grenade') g.visible = true;
     this.adsK = damp(this.adsK || 0, pl.ads ? 1 : 0, 16, dt);
@@ -6333,7 +6333,7 @@ const Touch = {
     const B = [ // id, label, right, bottom, size
       ['tFire', 'ОГОНЬ', 118, 150, 96], ['tAim', 'ПКМ', 38, 250, 62], ['tJump', '⤒', 30, 150, 62], ['tCrouch', '⤓', 30, 70, 62],
       ['tReload', 'R', 120, 64, 56], ['tUse', 'E', 200, 64, 56], ['tSwap', '⇄', 230, 150, 56], ['tNade', 'ГР', 230, 230, 52],
-      ['tKnife', 'НОЖ', 150, 260, 52], ['tLight', 'L', 300, 64, 48],
+      ['tKnife', 'НОЖ', 150, 260, 52], ['tLight', 'L', 300, 64, 48], ['tInspect', 'F', 300, 124, 44],
     ];
     for (const [id, label, r, b, sz] of B) { const d = document.createElement('div'); d.className = 'tbtn'; d.id = id; d.textContent = label; Object.assign(d.style, { right: r + 'px', bottom: b + 'px', width: sz + 'px', height: sz + 'px', lineHeight: sz + 'px' }); root.appendChild(d); }
     for (const [id, label, l, t] of [['tPause', '❚❚', 'auto', 10], ['tBuy', '$', 'auto', 10], ['tBoard', '☰', 'auto', 10]]) { const d = document.createElement('div'); d.className = 'tbtn small'; d.id = id; d.textContent = label; d.style.top = t + 'px'; root.appendChild(d); }
@@ -6361,6 +6361,7 @@ const Touch = {
       case 'tUse': if (down) this.press('KeyE'); else this.release('KeyE'); break;
       case 'tReload': if (down) this.press('KeyR'); else this.release('KeyR'); break;
       case 'tLight': if (down) this.press('KeyL'); else this.release('KeyL'); break;
+      case 'tInspect': if (down) this.press('KeyF'); else this.release('KeyF'); break;
       case 'tCrouch': if (down) { this.crouch = !this.crouch; if (this.crouch) Input.keys.add('KeyC'); else Input.keys.delete('KeyC'); } break;
       case 'tSwap': if (down) { const p = Game.player; if (p && p.alive) { const s = p.curSlot === 1 ? 2 : 1; p.select(p.slots[s] ? s : p.bestSlot()); } } break;
       case 'tNade': if (down) this.press('Digit4'); else this.release('Digit4'); break;
