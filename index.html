@@ -1,8 +1,4 @@
-<!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>As a Strike</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -316,9 +312,6 @@ body.touch #lockhint{display:none!important}
 #killcam b{position:absolute;left:50%;top:84px;transform:translateX(-50%);background:var(--bad);color:#fff;padding:4px 14px;font-family:var(--f-display);font-weight:400;letter-spacing:.2em}
 #killcam span{position:absolute;left:50%;top:118px;transform:translateX(-50%);font-weight:700;text-shadow:0 1px 3px #000;white-space:nowrap}
 </style>
-</head>
-<body>
-
 
 <canvas id="gl" tabindex="-1"></canvas>
 
@@ -2885,7 +2878,7 @@ const VM = {
       }
       if (P.sup) { P.sup.visible = !!(w.mods && w.mods.sil); P.dotS.visible = !!(w.mods && w.mods.dot); }
       if (P.warhead) P.warhead.visible = w.ammo > 0 || (w.reloading && now - w.reloadStart > def.reload * 0.55);
-      if (w.inspectT > 0) { const it = (now - w.inspectT) / 3; if (it > 0 && it < 1) { const e = Math.sin(it * Math.PI); ry += e * 1.1; rz += Math.sin(it * TAU) * 0.3; x -= e * 0.07; y += e * 0.03; rx += Math.sin(it * TAU * 2) * 0.12; } else w.inspectT = 0; }
+      if (w.inspectT > 0) { const it = (now - w.inspectT) / inspectDur(def); if (it > 0 && it < 1) { const o = inspectPose(def, P, it, w, g); x += o.x; y += o.y; z += o.z; rx += o.rx; ry += o.ry; rz += o.rz; } else { w.inspectT = 0; inspectReset(P); } }
     }
     if (pl.scoped) g.visible = false; else if (!def || def.kind !== 'grenade') g.visible = true;
     this.adsK = damp(this.adsK || 0, pl.ads ? 1 : 0, 16, dt);
@@ -3484,6 +3477,163 @@ Object.assign(SHOT_RECIPES, {
   paint: { crack: [1200, 0.04, 0.45], body: [220, 140, 0.06, 0.3], tail: [1000, 0.1, 0.06], rev: 0.03, soft: true, vol: 0.5 },
 });
 Object.assign(GEAR, { flashlight: { name: 'Фонарик (в руку)', price: 10, light: true } });
+
+// =====================================================================
+// ARSENAL 4 — a few more guns, and a proper inspect animation (F) per kind
+// =====================================================================
+Object.assign(MODEL_BUILDERS, {
+  makarov(g, P) {
+    P.slide = new THREE.Group(); g.add(P.slide);
+    part(P.slide, geoBoxR(0.028, 0.03, 0.15), MAT.gunmetalDark, 0, 0.042, -0.06);
+    part(P.slide, geoBoxR(0.006, 0.008, 0.008), MAT.gunmetal, 0, 0.06, -0.13);
+    part(g, geoBoxR(0.026, 0.02, 0.13), MAT.gunmetalDark, 0, 0.017, -0.055);
+    part(g, geoBoxR(0.03, 0.09, 0.044), MAT.band, 0, -0.032, 0.0, -0.18);
+    part(g, geoBoxR(0.005, 0.005, 0.045), MAT.gunmetalDark, 0, -0.004, -0.035);
+    P.mag = new THREE.Group(); g.add(P.mag); part(P.mag, geoBoxR(0.022, 0.02, 0.034), MAT.gunmetal, 0, -0.08, 0.01, -0.18);
+  },
+  mac10(g, P) {
+    part(g, geoBoxR(0.05, 0.08, 0.2), MAT.gunmetalDark, 0, 0.03, -0.05);
+    part(g, geoCylZ(0.011, 0.011, 0.06, 10), MAT.gunmetal, 0, 0.04, -0.18);
+    part(g, geoBoxR(0.036, 0.1, 0.04), MAT.polymer, 0, -0.06, -0.02);
+    P.mag = new THREE.Group(); g.add(P.mag); part(P.mag, geoBoxR(0.026, 0.12, 0.034), MAT.gunmetal, 0, -0.14, -0.02);
+    part(g, geoBoxR(0.04, 0.012, 0.012), MAT.gunmetalDark, 0, 0.0, -0.2); // front strap
+    for (const s of [-1, 1]) part(g, geoCylZ(0.004, 0.004, 0.16, 6), MAT.steel, s * 0.02, 0.045, 0.12);
+    P.bolt = part(g, geoBoxR(0.012, 0.012, 0.02), MAT.steel, 0, 0.076, -0.01);
+  },
+  bizon(g, P) {
+    part(g, geoBoxR(0.044, 0.06, 0.3), MAT.gunmetalDark, 0, 0.035, -0.06);
+    part(g, geoCylZ(0.011, 0.011, 0.14, 10), MAT.gunmetal, 0, 0.045, -0.27);
+    P.mag = new THREE.Group(); g.add(P.mag); part(P.mag, geoCylZ(0.032, 0.032, 0.24, 14), MAT.polymer, 0, -0.012, -0.14); part(P.mag, geoCylZ(0.034, 0.034, 0.02, 14), MAT.gunmetal, 0, -0.012, -0.03);
+    part(g, geoBoxR(0.032, 0.09, 0.044), MAT.polymer, 0, -0.04, 0.05, -0.25);
+    part(g, geoBoxR(0.03, 0.03, 0.2), MAT.gunmetal, 0, 0.03, 0.18);
+    part(g, geoBoxR(0.012, 0.03, 0.012), MAT.gunmetalDark, 0, 0.075, -0.2);
+    P.bolt = part(g, geoBoxR(0.012, 0.012, 0.03), MAT.steel, 0.026, 0.05, -0.02);
+  },
+  thompson(g, P) {
+    part(g, geoBoxR(0.046, 0.07, 0.24), MAT.gunmetalDark, 0, 0.035, -0.05);
+    part(g, geoCylZ(0.012, 0.012, 0.22, 10), MAT.gunmetal, 0, 0.045, -0.27);
+    for (let k = 0; k < 6; k++) part(g, geoCylZ(0.017, 0.017, 0.012, 12), MAT.gunmetalDark, 0, 0.045, -0.2 - k * 0.022); // cooling fins
+    part(g, geoBoxR(0.036, 0.06, 0.1), MAT.walnut, 0, -0.02, -0.25); part(g, geoBoxR(0.026, 0.06, 0.03), MAT.walnut, 0, -0.07, -0.24, 0.2);
+    P.mag = new THREE.Group(); g.add(P.mag); part(P.mag, geoCylZ(0.07, 0.07, 0.045, 20), MAT.gunmetalDark, 0, -0.06, -0.08).rotation.set(0, Math.PI / 2, 0);
+    part(g, geoBoxR(0.032, 0.09, 0.044), MAT.walnut, 0, -0.04, 0.05, -0.25);
+    part(g, geoTaper(0.04, 0.05, 0.1, 0.24, -0.02), MAT.walnut, 0, 0.0, 0.2);
+    P.bolt = part(g, geoBoxR(0.012, 0.014, 0.02), MAT.steel, 0, 0.078, 0.0);
+  },
+  mosin(g, P) {
+    part(g, geoCylZ(0.011, 0.012, 0.7, 12), MAT.gunmetalDark, 0, 0.045, -0.43);
+    part(g, geoBoxR(0.04, 0.05, 0.62), MAT.walnut, 0, 0.015, -0.3);
+    part(g, geoCylZ(0.016, 0.016, 0.16, 12), MAT.gunmetal, 0, 0.05, 0.0);
+    part(g, geoBoxR(0.034, 0.08, 0.05), MAT.walnut, 0, -0.035, 0.06, -0.35);
+    part(g, geoTaper(0.042, 0.055, 0.12, 0.28, -0.04), MAT.walnut, 0, -0.005, 0.24);
+    part(g, geoCylZ(0.017, 0.017, 0.24, 14), MAT.gunmetalDark, -0.004, 0.105, -0.04); part(g, new THREE.CircleGeometry(0.016, 14), MAT.glass, -0.004, 0.105, -0.161, 0, Math.PI);
+    for (const z of [-0.09, 0.02]) part(g, geoBoxR(0.012, 0.04, 0.012), MAT.gunmetal, 0, 0.075, z);
+    P.bolt = new THREE.Group(); P.bolt.position.set(0.024, 0.055, 0.05); g.add(P.bolt); part(P.bolt, geoCylZ(0.006, 0.006, 0.05, 8), MAT.steel, 0, 0, 0).rotation.set(0, Math.PI / 2, 0); part(P.bolt, new THREE.SphereGeometry(0.011, 8, 6), MAT.steel, 0.025, -0.01, 0);
+    P.mag = new THREE.Group(); g.add(P.mag);
+  },
+  capgun(g, P) {
+    part(g, geoBoxR(0.03, 0.03, 0.17), MAT.steel, 0, 0.045, -0.06); part(g, geoCylZ(0.008, 0.008, 0.05, 8), MAT.toyOrange, 0, 0.045, -0.16);
+    P.drum = new THREE.Group(); P.drum.position.set(0, 0.04, 0.01); g.add(P.drum); part(P.drum, geoCylZ(0.026, 0.026, 0.05, 8), MAT.steel, 0, 0, 0);
+    part(g, geoBoxR(0.032, 0.1, 0.046), MAT.toyYellow, 0, -0.035, 0.03, -0.25); P.hammer = part(g, geoBoxR(0.01, 0.03, 0.02), MAT.steel, 0, 0.075, 0.05);
+    P.mag = new THREE.Group(); g.add(P.mag);
+  },
+});
+Object.assign(HANDS, {
+  makarov: HANDS.p18, capgun: HANDS.p18, mac10: [[0, -0.05, -0.02], [0, -0.13, -0.02]], bizon: [[0, -0.045, 0.05], [0, -0.05, -0.15]],
+  thompson: [[0, -0.045, 0.05], [0, -0.07, -0.25]], mosin: [[0, -0.045, 0.06], [0, -0.01, -0.3]],
+});
+const SV = (base, id, o) => Object.assign({}, WEAPONS[base], { id, model: WEAPONS[base].model || base, pattern: WEAPONS[base].pattern }, o);
+Object.assign(WEAPONS, {
+  // ---------------- pistols
+  g18: SV('p18', 'g18', { name: 'Глок-18 (авто)', team: undefined, swap: { polymer: 'olive' }, price: 400, dmg: 24, armorPen: 0.47, rate: 0.065, auto: true, mag: 20, reserve: 100, spread: { base: 0.01, move: 0.05, air: 0.15, rec: 0.012, max: 0.08 }, kick: 0.9 }),
+  m1911: SV('k45', 'm1911', { name: 'Кольт 1911', team: undefined, swap: { polymer: 'walnut', gunmetalDark: 'steel' }, price: 350, dmg: 41, armorPen: 0.6, rate: 0.19, mag: 7, reserve: 49, kick: 1.6 }),
+  makarov: { id: 'makarov', name: 'ПМ Макарова', slot: 2, kind: 'pistol', price: 150, dmg: 26, armorPen: 0.45, rangeMod: 0.85, rate: 0.14, mag: 8, reserve: 64, reload: 1.9, draw: 0.5, speed: 6.0, spread: { base: 0.006, move: 0.04, air: 0.14, rec: 0.007, max: 0.05 }, kick: 1.0, sound: 'pistol', reward: 300, pen: 0.55, vmPos: [0.135, -0.15, -0.46], muzzle: [0, 0.042, -0.14] },
+  // ---------------- SMGs
+  mac10: { id: 'mac10', name: 'МАК-10', slot: 1, kind: 'smg', price: 1050, dmg: 25, armorPen: 0.57, rangeMod: 0.8, rate: 0.055, auto: true, mag: 30, reserve: 120, reload: 2.4, draw: 0.6, speed: 6.0, spread: { base: 0.013, move: 0.03, air: 0.15, rec: 0.003, max: 0.05 }, pattern: sprayPattern(67, 30, 0.6, 0.7), sound: 'smg', reward: 600, pen: 0.7, vmPos: [0.15, -0.16, -0.38], muzzle: [0, 0.04, -0.21] },
+  bizon: { id: 'bizon', name: 'ПП-19 Бизон', slot: 1, kind: 'smg', price: 1400, dmg: 24, armorPen: 0.58, rangeMod: 0.8, rate: 0.075, auto: true, mag: 64, reserve: 128, reload: 2.9, draw: 0.7, speed: 5.8, spread: { base: 0.009, move: 0.03, air: 0.15, rec: 0.0015, max: 0.04 }, pattern: sprayPattern(71, 64, 0.4, 0.4), sound: 'smg', reward: 600, pen: 0.7, vmPos: [0.16, -0.18, -0.4], muzzle: [0, 0.045, -0.34] },
+  thompson: { id: 'thompson', name: 'Томпсон', slot: 1, kind: 'smg', price: 1800, dmg: 31, armorPen: 0.6, rangeMod: 0.83, rate: 0.075, auto: true, mag: 50, reserve: 100, reload: 3.4, draw: 0.9, speed: 5.4, spread: { base: 0.008, move: 0.035, air: 0.15, rec: 0.0022, max: 0.045 }, pattern: sprayPattern(73, 50, 0.7, 0.45), sound: 'smg', reward: 600, pen: 0.9, vmPos: [0.16, -0.18, -0.41], muzzle: [0, 0.045, -0.39] },
+  // ---------------- shotguns
+  nova: SV('sg12', 'nova', { name: 'Нова', swap: { polymer: 'walnut' }, price: 1050, dmg: 26, pellets: 9, rate: 0.95, mag: 8, reserve: 32 }),
+  saiga: { id: 'saiga', name: 'Сайга-12', slot: 1, kind: 'shotgun', model: 'ak', swap: { walnut: 'polymer' }, boxMag: true, price: 2400, dmg: 22, pellets: 8, armorPen: 0.6, rangeMod: 0.5, rate: 0.28, mag: 8, reserve: 32, reload: 2.8, draw: 0.9, speed: 5.3, spread: { base: 0.05, move: 0.02, air: 0.1, rec: 0.004, max: 0.06 }, kick: 2.4, sound: 'shotgun', reward: 900, pen: 0.4, vmPos: [0.165, -0.19, -0.44], muzzle: [0, 0.035, -0.69] },
+  // ---------------- rifles, snipers, MG
+  m4a1s: SV('m4', 'm4a1s', { name: 'М4А1-S (глушитель)', price: 2900, dmg: 34, rate: 0.1, mag: 20, reserve: 80, silent: true, muzzle: [0, 0.035, -0.75], spread: { base: 0.0024, move: 0.085, air: 0.22, rec: 0.0018, max: 0.028 }, pattern: sprayPattern(6, 20, 0.7, 0.35) }),
+  ak74: SV('ak', 'ak74', { name: 'АК-74', team: undefined, swap: { walnut: 'polymer' }, price: 2500, dmg: 31, armorPen: 0.75, rate: 0.092, pattern: sprayPattern(48, 30, 0.75, 0.45), spread: { base: 0.003, move: 0.09, air: 0.22, rec: 0.0022, max: 0.033 } }),
+  mosin: { id: 'mosin', name: 'Мосинка (оптика)', slot: 1, kind: 'sniper', price: 2600, dmg: 105, armorPen: 0.9, rangeMod: 0.99, rate: 1.35, mag: 5, reserve: 25, reload: 3.2, draw: 1.0, speed: 5.1, scope: [40, 16], spread: { base: 0.0013, noscope: 0.06, move: 0.15, air: 0.3, rec: 0, max: 0 }, kick: 2.2, sound: 'awp', reward: 300, pen: 2.3, vmPos: [0.17, -0.2, -0.48], muzzle: [0, 0.045, -0.8] },
+  g3sg1: SV('scar20', 'g3sg1', { name: 'Автоснайперка G3', swap: { gunmetal: 'gunmetalDark', polymer: 'olive' }, price: 5000, dmg: 80 }),
+  negev: SV('pkm', 'negev', { name: 'Пулемёт Негев', swap: { walnut: 'polymer' }, price: 4300, dmg: 30, rate: 0.065, mag: 150, reserve: 150, pattern: sprayPattern(79, 150, 0.6, 0.8) }),
+  // ---------------- doubles
+  dual_glock: Object.assign({}, WEAPONS.dualies, { id: 'dual_glock', name: 'Двойные Глоки', dual: 'g18', model: 'p18', price: 700, dmg: 23, rate: 0.055, auto: true, mag: 40, reserve: 120, spread: { base: 0.016, move: 0.05, air: 0.15, rec: 0.012, max: 0.09 } }),
+  dual_mac10: Object.assign({}, WEAPONS.dual_uzi, { id: 'dual_mac10', name: 'Двойные МАК-10', dual: 'mac10', model: 'mac10', price: 1900, dmg: 23, rate: 0.038, mag: 60, reserve: 180, muzzle: [0, 0.04, -0.21] }),
+  // ---------------- toys
+  gelblaster: SV('airsoft', 'gelblaster', { name: 'Гель-бластер (орбиз)', swap: { gunmetal: 'toyGreen', polymer: 'toyBlue', gunmetalDark: 'toyBlue' }, price: 200, dmg: 6, rate: 0.08, mag: 200, reserve: 400, proj: 'paint' }),
+  capgun: Object.assign({}, WEAPONS.bbpistol, { id: 'capgun', name: 'Пистонный пистолет', model: 'capgun', price: 20, dmg: 1, armorPen: 0, rate: 0.25, mag: 8, reserve: 80, silent: false, sound: 'pistol', reward: 1500, muzzle: [0, 0.045, -0.19] }),
+});
+Object.assign(STAT_BARS, {
+  g18: [24, 92, 35], m1911: [41, 45, 60], makarov: [26, 62, 55], mac10: [25, 96, 30], bizon: [24, 80, 52], thompson: [31, 80, 50], nova: [104, 22, 18], saiga: [88, 55, 15],
+  m4a1s: [34, 72, 82], ak74: [31, 75, 72], mosin: [105, 14, 94], g3sg1: [80, 45, 86], negev: [30, 96, 30], dual_glock: [23, 100, 20], dual_mac10: [23, 100, 18], gelblaster: [6, 90, 40], capgun: [1, 40, 40],
+});
+
+// ------------------------------------------------------------ inspect (F): each kind of gun gets its own little routine
+const INSPECT_DUR = { knife: 2.4, pistol: 2.8, smg: 3.2, rifle: 3.4, sniper: 3.4, shotgun: 3.0, launcher: 2.6, grenade: 2.2 };
+const inspectDur = (d) => (d.toy ? 2.6 : INSPECT_DUR[d.kind] || 3);
+const _io = { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 };
+function inspectPose(d, P, it, w, g) {
+  const o = _io; o.x = o.y = o.z = o.rx = o.ry = o.rz = 0;
+  const bell = (a, b) => smoothstep(a, a + (b - a) * 0.3, it) * (1 - smoothstep(b - (b - a) * 0.3, b, it)); // up, hold, down between a and b
+  const snd = (stage, at, kind) => { if (it > at && (w.inspS || 0) < stage) { w.inspS = stage; Sound.mech(kind); } };
+  if (it < 0.02) w.inspS = 0;
+  const k = d.kind;
+  if (k === 'knife') { // flip it over, spin it in the fingers, show the edge
+    const a = bell(0, 0.45), spin = smoothstep(0.42, 0.72, it), b = bell(0.68, 1);
+    o.ry += a * 1.2 - b * 0.6; o.rz += a * 0.5; o.x -= a * 0.06; o.y += a * 0.04 + Math.sin(spin * Math.PI) * 0.06;
+    o.rx += spin * TAU; o.z -= Math.sin(spin * Math.PI) * 0.05; o.rz += b * -0.9; o.x -= b * 0.03;
+    return o;
+  }
+  if (k === 'grenade') { // toss it up and catch it
+    const t = clamp((it - 0.15) / 0.55, 0, 1), up = 4 * t * (1 - t); o.y += up * 0.16; o.rx += t * TAU * 1.5; o.rz += bell(0, 1) * 0.3; o.x -= bell(0, 1) * 0.04;
+    return o;
+  }
+  if (P.subL) { // two guns: twirl both, one after the other
+    w.twR = smoothstep(0.15, 0.45, it); w.twL = smoothstep(0.45, 0.75, it); // applied to each gun in the dual viewmodel
+    o.y += bell(0.1, 0.9) * 0.02; snd(1, 0.45, 'draw'); snd(2, 0.75, 'draw');
+    return o;
+  }
+  if (d.toy && P.tank) { const s = bell(0.1, 0.8); o.x += Math.sin(it * 70) * 0.012 * s; o.y += Math.cos(it * 55) * 0.008 * s; o.ry += s * 0.5; return o; } // shake the water tank
+  if (k === 'pistol') { // turn the left side to you, pull the slide back a little to check the chamber, turn back
+    const a = bell(0, 0.42), c = bell(0.42, 0.85);
+    o.ry += a * 1.0 - c * 0.35; o.rz += a * 0.55 + c * 0.2; o.x -= a * 0.05 + c * 0.02; o.y += a * 0.035 + c * 0.03; o.rx += c * 0.25;
+    if (P.slide) P.slide.position.z = P.slide.userData.base.z + bell(0.5, 0.75) * 0.028;
+    if (P.drum) P.drum.position.x = bell(0.5, 0.8) * 0.035; // revolver: swing the cylinder out
+    snd(1, 0.52, 'out'); snd(2, 0.72, 'in');
+    return o;
+  }
+  if (k === 'launcher') { const a = bell(0, 1); o.ry += a * 0.7; o.y += a * 0.05; o.rz += a * 0.3; o.rx -= bell(0.4, 0.8) * 0.2; return o; }
+  // long guns: tilt to show the side, drop the magazine a bit and slap it back, tug the bolt, back to ready
+  const a = bell(0, 0.4), m = bell(0.38, 0.72), b = bell(0.7, 0.95);
+  o.ry += a * 0.85 + m * 0.2; o.rz += a * 0.45 + m * 0.55 + b * 0.2; o.x -= a * 0.06 + m * 0.03; o.y += a * 0.04 + m * 0.02; o.rx += m * 0.12;
+  if (k === 'sniper') { o.ry -= m * 0.9; o.rx += m * 0.1; o.z += m * 0.04; } // look over the scope instead
+  if (P.mag && k !== 'sniper' && k !== 'shotgun') {
+    const drop = bell(0.45, 0.66); P.mag.position.copy(P.mag.userData.base); P.mag.position.y -= drop * 0.05; P.mag.position.z += drop * 0.01;
+    if (P.lHand && P.lHand.userData.base && P.lHand.userData.host === g) {
+      const hb = P.lHand.userData.base, tg = _v4.copy(hb).lerp(_v2.copy(P.mag.position).add(_v3.set(-0.01, -0.06, 0)), m);
+      P.lHand.position.copy(tg); P.lArm.position.copy(P.lArm.userData.base).add(_v2.subVectors(tg, hb).multiplyScalar(0.7));
+    }
+    snd(1, 0.48, 'out'); snd(2, 0.62, 'in');
+  }
+  if (P.pump && k === 'shotgun') { P.pump.position.z = bell(0.45, 0.7) * 0.04; snd(1, 0.5, 'pump'); }
+  if (P.bolt) {
+    const bt = bell(0.72, 0.9);
+    if (k === 'sniper') { P.bolt.rotation.z = bt * 1.2; P.bolt.position.z = P.bolt.userData.base.z + bt * 0.03; }
+    else P.bolt.position.z = P.bolt.userData.base.z + bt * 0.035;
+    snd(3, 0.76, 'bolt');
+  }
+  if (P.lever) P.lever.rotation.x = -bell(0.45, 0.75) * 0.5;
+  if (P.band) P.band.scale.z = 0.6 + bell(0.3, 0.8) * 0.8;
+  return o;
+}
+function inspectReset(P) {
+  for (const k of ['mag', 'slide', 'bolt', 'pump']) if (P[k] && P[k].userData.base) P[k].position.copy(P[k].userData.base);
+  if (P.bolt) P.bolt.rotation.z = 0; if (P.drum) P.drum.position.x = 0; if (P.lever) P.lever.rotation.x = 0;
+}
 
 // =====================================================================
 // CHARACTERS — jointed soldier models, walk/crouch/aim/death animation
@@ -4700,11 +4850,11 @@ function botBuy(a) {
   const w2 = a.slots[2]; if (w2 && w2.reserve < magOf(w2) && m() >= 300) buy('ammo_s');
   if (a.slots[1] && a.slots[1].def.kind !== 'smg') { /* keep the gun */ }
   else if (m() >= 4750 + 1000 && Math.random() < 0.18 && !Game.actors.some((x) => x !== a && x.team === a.team && x.slots[1] && x.slots[1].id === 'awp')) buy('awp');
-  else if (m() >= rp + 650) { const r = Math.random(); buy(r < 0.08 && m() >= 5200 + 650 ? 'm249' : r < 0.14 && m() >= 5000 + 650 ? 'scar20' : r < 0.2 && m() >= 4800 + 650 ? 'pkm' : r < 0.26 ? 'm4gl' : r < 0.36 ? (T ? 'sg553' : 'aug') : r < 0.41 && m() >= 3800 + 650 ? 'svd' : rifle); }
+  else if (m() >= rp + 650) { const r = Math.random(); buy(r < 0.08 && m() >= 5200 + 650 ? 'm249' : r < 0.14 && m() >= 5000 + 650 ? 'scar20' : r < 0.2 && m() >= 4800 + 650 ? 'pkm' : r < 0.26 ? 'm4gl' : r < 0.36 ? (T ? choice(['sg553', 'ak74']) : choice(['aug', 'm4a1s'])) : r < 0.41 && m() >= 3800 + 650 ? 'svd' : rifle); }
   else if (m() >= 2050 + 650 && Math.random() < 0.6) buy(T ? 'galil' : 'famas');
   else if (m() >= 1700 + 650 && Math.random() < 0.25) buy('scout');
-  else if (m() >= 1250 + 650 && Math.random() < 0.6) buy(choice(['vp9', 'ump', 'mp7', 'mp5sd', 'uzi', 'vector']));
-  else if (m() >= 1100 + 650 && Math.random() < 0.5) buy(choice(['sg12', 'sg12', 'dbarrel', 'mag7']));
+  else if (m() >= 1250 + 650 && Math.random() < 0.6) buy(choice(['vp9', 'ump', 'mp7', 'mp5sd', 'uzi', 'vector', 'mac10', 'bizon', 'thompson']));
+  else if (m() >= 1100 + 650 && Math.random() < 0.5) buy(choice(['sg12', 'nova', 'dbarrel', 'mag7', 'saiga']));
   else if (m() >= 1500 && Math.random() < 0.4 && (!a.slots[2] || !/deagle|r8|dual/.test(a.slots[2].id))) buy(choice(['deagle', 'r8', T ? 'tec9' : 'five', 'dualies', 'cz75', 'dual_deagle']));
   if (a.slots[1] && m() >= 600 && Math.random() < 0.25) buy(choice(['mod_sil', 'mod_ext']));
   if (m() >= 1000 && a.armor < 50) buy('vesthelm'); else if (m() >= 650 && a.armor < 50) buy('vest');
@@ -6647,6 +6797,7 @@ VM.update = function (dt, pl) {
     }
     if (!w.reloading) { P.subR.rotation.z = 0; P.subL.rotation.z = 0; }
     if (P.mag2 && P.mag) { P.mag2.position.copy(P.mag.position); P.mag2.visible = P.mag.visible; }
+    if (w.inspectT > 0) { const tr = Math.sin((w.twR || 0) * Math.PI), tl = Math.sin((w.twL || 0) * Math.PI); P.subR.rotation.z -= tr * 0.55; P.subL.rotation.z += tl * 0.55; P.subR.rotation.y = tr * 0.35; P.subL.rotation.y = -tl * 0.35; P.subR.position.y += tr * 0.035; P.subL.position.y += tl * 0.035; } else { w.twR = w.twL = 0; P.subR.rotation.y = P.subL.rotation.y = 0; }
     if (P.drum2 && P.drum) P.drum2.rotation.z = P.drum.rotation.z;
   }
   if (P.light) { // flashlight hand: raised when lit, lowered when off, out of the way during reload
@@ -6757,7 +6908,7 @@ const ToyProj = {
     else if (type === 'paint') { col = choice(PAINT_COLS); part(mesh, new THREE.SphereGeometry(0.014, 8, 6), new THREE.MeshStandardMaterial({ color: col, roughness: 0.2 }), 0, 0, 0); }
     else part(mesh, new THREE.SphereGeometry(0.016, 8, 6), MAT.gunmetal, 0, 0, 0);
     mesh.position.copy(p); scene.add(mesh);
-    this.list.push({ type, T, pos: p, vel: dir.clone().multiplyScalar(T.sp), owner: a, t: 0, mesh, state: 'fly', life: 0, col, bounces: 0 });
+    this.list.push({ type, T, def: a.weapon && a.weapon.def.proj === type ? a.weapon.def : WEAPONS[T.def], pos: p, vel: dir.clone().multiplyScalar(T.sp), owner: a, t: 0, mesh, state: 'fly', life: 0, col, bounces: 0 });
   },
   update(dt) {
     for (let i = this.list.length - 1; i >= 0; i--) {
@@ -6769,7 +6920,7 @@ const ToyProj = {
       let hitT = World.raycast(r.pos.x, r.pos.y, r.pos.z, d.x, d.y, d.z, step); const H = hitT >= 0 ? { ...World.hit } : null; let victim = null, grp = null;
       for (const a of Game.actors) { if (!a.alive || (a === r.owner && r.t < 0.25) || (a !== r.owner && !foe(a, r.owner))) continue; const h = rayHitActor(a, r.pos.x, r.pos.y, r.pos.z, d.x, d.y, d.z, hitT >= 0 ? hitT : step); if (h) { hitT = h.t; victim = a; grp = h.group; } }
       if (hitT < 0) { r.pos.addScaledVector(d, step); r.mesh.position.copy(r.pos); r.mesh.lookAt(_v3.copy(r.pos).sub(d)); continue; }
-      const at = r.pos.clone().addScaledVector(d, hitT), def = WEAPONS[r.T.def];
+      const at = r.pos.clone().addScaledVector(d, hitT), def = r.def;
       if (victim) { ToyFx.curCol = r.col || 0xff2d7a; applyDamage(victim, r.owner, def.dmg, grp, def, at, d.clone(), false); this.remove(i); continue; }
       const n = H ? V3(H.nx, H.ny, H.nz) : UP.clone();
       if (H && H.box && H.box.destr) Destr.hit(H.box.destr, def.dmg, r.owner, at);
@@ -6798,7 +6949,7 @@ HUD.paintHit = function (col) {
   el.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(${rgb},.55) 0, rgba(${rgb},.35) 9%, rgba(${rgb},0) 22%)`;
   el.style.transition = 'none'; el.style.opacity = 1; void el.offsetWidth; el.style.transition = 'opacity 1.6s ease-in'; el.style.opacity = 0;
 };
-BR_LOOT.push('beretta', 'usp', 'cz75', 'uzi', 'mp7', 'vector', 'aug', 'sg553', 'svd', 'mag7', 'dualies', 'dual_uzi', 'dual_deagle', 'multipump', 'paintball', 'nerf', 'pcp');
+BR_LOOT.push('makarov', 'm1911', 'g18', 'mac10', 'bizon', 'thompson', 'nova', 'saiga', 'ak74', 'm4a1s', 'mosin', 'negev', 'gelblaster', 'beretta', 'usp', 'cz75', 'uzi', 'mp7', 'vector', 'aug', 'sg553', 'svd', 'mag7', 'dualies', 'dual_uzi', 'dual_deagle', 'multipump', 'paintball', 'nerf', 'pcp');
 
 // ------------------------------------------------------------ shop: pages of categories
 const BUY_PAGES = [
@@ -6816,9 +6967,19 @@ const BUY_PAGES = [
   { name: 'Игрушечное и пневматика', cats: [
     { name: 'Пневматика', items: ['bbpistol', 'multipump', 'pcp'] },
     { name: 'Страйкбол и пейнтбол', items: ['airsoft', 'paintball'] },
-    { name: 'Игрушки', items: ['water', 'nerf', 'slingshot'] },
+    { name: 'Игрушки', items: ['water', 'nerf', 'slingshot', 'capgun', 'gelblaster'] },
     { name: 'Снаряжение', items: ['flashlight', 'vest', 'vesthelm'] },
     { name: 'Патроны', items: ['ammo_p', 'ammo_s'] },
+  ] },
+  { name: 'Ещё оружие', cats: [
+    { name: 'Пистолеты', items: ['makarov', 'm1911', 'g18'] },
+    { name: 'Двойные', items: ['dual_glock', 'dual_mac10'] },
+    { name: 'ПП', items: ['mac10', 'bizon', 'thompson'] },
+    { name: 'Дробовики', items: ['nova', 'saiga'] },
+    { name: 'Винтовки', items: ['ak74', 'm4a1s'] },
+    { name: 'Снайперские', items: ['mosin', 'g3sg1'] },
+    { name: 'Пулемёты', items: ['negev'] },
+    { name: 'Патроны', items: ['ammo_p', 'ammo_s', 'ammo_gl'] },
   ] },
   { name: 'Экзотика', cats: [
     { name: 'Пусковые', items: ['rpg', 'm4gl', 'flare'] },
@@ -6957,5 +7118,5 @@ function render() {
 window.__su = (a) => surfaceUnder(a); window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); Env.update(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Profile, Skins, Killcam, Secret, Rockets, Env, BR, Destr, Climb, Proj, Touch, Post, MAP: () => MAP, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, get camera() { return camera; }, get renderer() { return renderer; } };
 boot();
 </script>
-</body>
-</html>
+
+</body></html>
