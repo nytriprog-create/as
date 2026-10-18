@@ -316,6 +316,18 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
 .co-rays{position:absolute;inset:0;pointer-events:none;background:repeating-conic-gradient(from 0deg,rgba(255,204,51,.12) 0 6deg,transparent 6deg 18deg);animation:corays 8s linear infinite;opacity:0;transition:opacity .6s}
 .co-rays.on{opacity:1}
 @keyframes corays{to{transform:rotate(360deg)}}
+#slowFx{position:fixed;inset:0;pointer-events:none;z-index:5;opacity:0;transition:opacity .25s;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(20,40,90,.45) 100%);backdrop-filter:saturate(.5);-webkit-backdrop-filter:saturate(.5)}
+#slowFx.on{opacity:1}
+#trader{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45)}
+#trader.hidden{display:none}
+.tr-in{width:min(520px,calc(100% - 32px));background:var(--panel2);border:1px solid var(--line);padding:18px 20px}
+.tr-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tr-list button,.tr-close{all:unset;cursor:pointer;padding:10px 12px;border:1px solid var(--line);background:rgba(255,255,255,.04);display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.tr-list button span{color:#7fd8ff;font-weight:800}
+.tr-list button:hover{border-color:var(--signal)}
+.tr-list button.no{opacity:.4}
+.tr-close{margin-top:12px;justify-content:center}
+.seg.fun button{font-size:12px;padding:6px 10px}
 .skin-row{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .skin-row b{font-size:14px}
 .skin-opts{display:flex;flex-wrap:wrap;gap:6px}
@@ -6427,7 +6439,7 @@ const Touch = {
     const B = [ // id, label, right, bottom, size
       ['tFire', 'ОГОНЬ', 118, 150, 96], ['tAim', 'ПКМ', 38, 250, 62], ['tJump', '⤒', 30, 150, 62], ['tCrouch', '⤓', 30, 70, 62],
       ['tReload', 'R', 120, 64, 56], ['tUse', 'E', 200, 64, 56], ['tSwap', '⇄', 230, 150, 56], ['tNade', 'ГР', 230, 230, 52],
-      ['tKnife', 'НОЖ', 150, 260, 52], ['tLight', 'L', 300, 64, 48], ['tInspect', 'F', 300, 124, 44],
+      ['tKnife', 'НОЖ', 150, 260, 52], ['tLight', 'L', 300, 64, 48], ['tInspect', 'F', 300, 124, 44], ['tHook', '⚓', 300, 184, 44],
     ];
     for (const [id, label, r, b, sz] of B) { const d = document.createElement('div'); d.className = 'tbtn'; d.id = id; d.textContent = label; Object.assign(d.style, { right: r + 'px', bottom: b + 'px', width: sz + 'px', height: sz + 'px', lineHeight: sz + 'px' }); root.appendChild(d); }
     for (const [id, label, l, t] of [['tPause', '❚❚', 'auto', 10], ['tBuy', '$', 'auto', 10], ['tBoard', '☰', 'auto', 10]]) { const d = document.createElement('div'); d.className = 'tbtn small'; d.id = id; d.textContent = label; d.style.top = t + 'px'; root.appendChild(d); }
@@ -6457,6 +6469,7 @@ const Touch = {
       case 'tUse': if (down) this.press('KeyE'); else this.release('KeyE'); break;
       case 'tReload': if (down) this.press('KeyR'); else this.release('KeyR'); break;
       case 'tLight': if (down) this.press('KeyL'); else this.release('KeyL'); break;
+      case 'tHook': if (down) this.press('KeyH'); else this.release('KeyH'); break;
       case 'tInspect': if (down) this.press('KeyF'); else this.release('KeyF'); break;
       case 'tCrouch': if (down) { this.crouch = !this.crouch; if (this.crouch) Input.keys.add('KeyC'); else Input.keys.delete('KeyC'); } break;
       case 'tSwap': if (down) { const p = Game.player; if (p && p.alive) { const s = p.curSlot === 1 ? 2 : 1; p.select(p.slots[s] ? s : p.bestSlot()); } } break;
@@ -6513,7 +6526,7 @@ const Touch = {
     $('touch').classList.toggle('hidden', !show);
     if (!show && (Input.lmb || Input.rmb)) { Input.lmb = Input.rmb = false; }
     if (show && !this.editing) this.updateExtras();
-    const p = Game.player, w = p && p.weapon; $('tAim').style.display = w && (w.def.kind === 'sniper' || w.def.fan || w.def.duplet || w.def.gl || w.def.optic || p.lightMode || (w.mods && w.mods.dot)) ? 'block' : 'none';
+    const p = Game.player, w = p && p.weapon; $('tAim').style.display = w && (w.def.kind === 'sniper' || w.def.fan || w.def.duplet || w.def.gl || w.def.optic || w.def.tool || p.lightMode || (w.mods && w.mods.dot)) ? 'block' : 'none';
   },
   vibe(ms) { if (Settings.haptics === false || !navigator.vibrate) return; const now = performance.now(); if (now - (this.vibeT || 0) < 60) return; this.vibeT = now; try { navigator.vibrate(ms); } catch (e) { /* not supported */ } },
   updateExtras() {
@@ -6530,7 +6543,7 @@ const Touch = {
     // context buttons: E lights up when there's something to use, grenades/flashlight only when you have them
     const site = World.siteAt(p.pos.x, p.pos.z), useful = p.alive && ((p.hasBomb() && site) || (p.team === 'CT' && Game.bomb.state === 'planted' && Game.bomb.pos && p.pos.distanceTo(Game.bomb.pos) < 2.2) || Drops.nearest(p.pos, 2.2) || (typeof Climb !== 'undefined' && Climb.nearZip && Climb.nearZip(p)));
     $('tUse').classList.toggle('dim', !useful);
-    $('tNade').style.display = p.slots[4].length ? 'block' : 'none'; $('tLight').style.display = p.hasLight ? 'block' : 'none';
+    $('tNade').style.display = p.slots[4].length ? 'block' : 'none'; $('tLight').style.display = p.hasLight ? 'block' : 'none'; $('tHook').style.display = p.hasHook ? 'block' : 'none';
     $('tLight').classList.toggle('on', !!p.lightMode && Env.flashOn);
     // pistols reload on their own on the phone when the magazine runs dry
     const w = p.weapon; if (p.alive && w && w.def.mag && w.ammo === 0 && w.reserve > 0 && !w.reloading && now - w.lastShot > 0.35 && !Input.lmb) startReload(p);
@@ -7500,6 +7513,443 @@ const Cases = {
 }
 
 // =====================================================================
+// FUN — gravity gun, portal gun, grappling hook, match modifiers
+// (lava floor, low gravity, big heads, exploding bodies, headshot slow-mo,
+// pacifist bots, random guns), chickens, a travelling trader, night ghosts
+// =====================================================================
+const FUN_OPTS = [
+  ['lava', 'Пол — это лава'], ['lowgrav', 'Низкая гравитация'], ['bigheads', 'Большие головы'], ['boom', 'Взрывные трупы'],
+  ['slowmo', 'Замедление после хедшота'], ['pacifist', 'Боты-пацифисты'], ['randomgun', 'Случайное оружие каждые 20 с'],
+  ['chickens', 'Курицы'], ['trader', 'Торговец'], ['ghosts', 'Призраки ночью'],
+];
+if (!Settings.fun) Settings.fun = { chickens: true, trader: true, ghosts: true };
+GAME_KEYS.add('KeyH');
+const _vF = V3(), _vF2 = V3(), _vF3 = V3();
+const funOn = (k) => !!(Settings.fun && Settings.fun[k]) && Game.cfg.mode !== 'train';
+
+// ------------------------------------------------------------ the two sci-fi guns
+Object.assign(MODEL_BUILDERS, {
+  gravgun(g, P) {
+    if (!MAT.gravOrange) { MAT.gravOrange = new THREE.MeshStandardMaterial({ color: 0xe8711a, roughness: 0.45, metalness: 0.4 }); MAT.gravCore = new THREE.MeshBasicMaterial({ color: 0xffb35a }); MAT.portalWhite = new THREE.MeshStandardMaterial({ color: 0xe9edf0, roughness: 0.3, metalness: 0.1 }); MAT.portalBlue = new THREE.MeshBasicMaterial({ color: 0x3aa8ff }); MAT.portalOrange = new THREE.MeshBasicMaterial({ color: 0xff8a1a }); }
+    part(g, geoRBox(0.09, 0.1, 0.3, 0.02), MAT.gravOrange, 0, 0.02, 0.0);
+    part(g, geoCylZ(0.05, 0.045, 0.16, 14), MAT.gunmetalDark, 0, 0.03, -0.2);
+    P.core = part(g, new THREE.SphereGeometry(0.032, 14, 10), MAT.gravCore, 0, 0.03, -0.27);
+    P.prongs = [];
+    for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + Math.PI / 2, pr = new THREE.Group(); pr.position.set(Math.cos(a) * 0.05, 0.03 + Math.sin(a) * 0.05, -0.27); pr.rotation.z = a; g.add(pr); part(pr, geoBoxR(0.014, 0.014, 0.12), MAT.gunmetal, 0, 0, -0.05); P.prongs.push(pr); }
+    part(g, geoBoxR(0.034, 0.1, 0.05), MAT.gunmetalDark, 0, -0.07, 0.06, -0.25); part(g, geoBoxR(0.05, 0.03, 0.14), MAT.gunmetalDark, 0, -0.04, -0.12);
+    for (const s of [-1, 1]) part(g, geoCylZ(0.008, 0.008, 0.26, 8), MAT.steel, s * 0.05, 0.075, -0.02);
+  },
+  portalgun(g, P) {
+    MODEL_BUILDERS.gravgun(new THREE.Group(), {}); // makes sure the shared materials exist
+    part(g, geoRBox(0.08, 0.09, 0.26, 0.035), MAT.portalWhite, 0, 0.02, 0.02);
+    part(g, geoCylZ(0.045, 0.03, 0.14, 16), MAT.gunmetalDark, 0, 0.03, -0.17);
+    P.tube = part(g, geoCylZ(0.022, 0.022, 0.2, 12), MAT.portalBlue, 0, 0.085, -0.02);
+    for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + Math.PI / 2; const c = part(g, geoBoxR(0.012, 0.012, 0.07), MAT.gunmetalDark, Math.cos(a) * 0.04, 0.03 + Math.sin(a) * 0.04, -0.25); c.rotation.set(Math.sin(a) * 0.4, -Math.cos(a) * 0.4, 0); }
+    part(g, geoBoxR(0.034, 0.1, 0.05), MAT.portalWhite, 0, -0.07, 0.06, -0.25);
+  },
+});
+HANDS.gravgun = [[0, -0.07, 0.06], [0, -0.05, -0.15]]; HANDS.portalgun = [[0, -0.07, 0.06], [0, -0.04, -0.13]];
+Object.assign(WEAPONS, {
+  gravgun: { id: 'gravgun', name: 'Гравипушка', slot: 1, kind: 'rifle', tool: 'grav', price: 3000, speed: 5.4, draw: 0.9, noMods: true, noShell: true, silent: true, dmg: 0, reward: 300, vmPos: [0.17, -0.2, -0.44], muzzle: [0, 0.03, -0.33] },
+  portalgun: { id: 'portalgun', name: 'Портальная пушка', slot: 1, kind: 'rifle', tool: 'portal', price: 2500, speed: 5.6, draw: 0.8, noMods: true, noShell: true, silent: true, dmg: 0, reward: 300, vmPos: [0.17, -0.2, -0.44], muzzle: [0, 0.03, -0.26] },
+});
+WEAPONS.lava = { id: 'lava', name: 'Лава', kind: 'env', reward: 0 };
+Object.assign(GEAR, { hook: { name: 'Крюк-кошка (H)', price: 250, hook: true } });
+{ // shop: sci-fi on the exotic page, the hook next to armour
+  const ex = BUY_PAGES.find((p) => p.name === 'Экзотика'); if (ex) ex.cats.splice(ex.cats.length - 1, 0, { name: 'Фантастика', items: ['gravgun', 'portalgun'] });
+  const eq = BUY_PAGES[0].cats.find((c) => c.name === 'Снаряжение'); if (eq) eq.items.push('hook');
+  const bs = Game.buyState, buy = Game.buy;
+  Game.buyState = function (a, id) { if (id === 'hook') return a.hasHook ? 'own' : a.money < this.priceOf(id, a) ? 'money' : 'ok'; return bs.call(this, a, id); };
+  Game.buy = function (a, id, silent) {
+    if (id !== 'hook') return buy.call(this, a, id, silent);
+    if (!this.canBuy(a) || this.buyState(a, id) !== 'ok') { if (!silent) Sound.ui('deny'); return false; }
+    const price = this.priceOf(id, a); a.hasHook = true; a.money -= price;
+    if (a === this.player) { Sound.ui('buy'); HUD.money(-price, ''); HUD.chat('Крюк-кошка: H — выстрелить в стену или крышу и подтянуться. H или прыжок — отцепиться.', 'sys'); UI.renderBuy(); }
+    return true;
+  };
+  const rl = Actor.prototype.resetLoadout;
+  Actor.prototype.resetLoadout = function (full) { rl.call(this, full); if (full) this.hasHook = isBR() || (Game.free && !!this.hasHook); this.hook = null; this.heldBy = null; };
+  const ds = Drops.spawn.bind(Drops); Drops.spawn = function (w, a) { if (w && w.def.tool) return; return ds(w, a); }; // sci-fi guns vanish with their owner
+}
+
+// ------------------------------------------------------------ Fun: everything that runs during a match
+const Fun = {
+  portals: [null, null], chickens: [], trader: null, ghost: null, lava: null, held: null, slowUntil: 0,
+  timeScale() { return performance.now() < this.slowUntil ? 0.3 : 1; },
+  start() {
+    this.clear();
+    PHYS.gravity = funOn('lowgrav') ? 7.5 : 20;
+    for (const a of Game.actors) a.headScale = funOn('bigheads') ? 2 : 1;
+    this.lavaT = 30; this.lavaOn = 0; this.gunT = 20; this.ghostT = rand(15, 30);
+    if (funOn('chickens')) for (let k = 0; k < 9; k++) this.spawnChicken();
+    if (funOn('trader') && Game.cfg.mode !== 'br') this.placeTrader();
+    const on = FUN_OPTS.filter(([k]) => funOn(k) && !['chickens', 'trader', 'ghosts'].includes(k)).map(([, n]) => n);
+    if (on.length) Game.after(1.5, () => HUD.chat('Приколы: ' + on.join(', ') + '.', 'sys'));
+  },
+  onRound() { this.portals.forEach((p, i) => this.removePortal(i)); if (funOn('trader') && Game.cfg.mode !== 'br') this.placeTrader(); this.lavaT = 30; this.endLava(); },
+  clear() {
+    this.portals.forEach((p, i) => this.removePortal(i));
+    for (const c of this.chickens) scene.remove(c.mesh); this.chickens = [];
+    if (this.trader) { scene.remove(this.trader.mesh); this.trader = null; }
+    if (this.ghost) { scene.remove(this.ghost.mesh); this.ghost = null; }
+    this.endLava(); if (this.rope) this.rope.visible = false; this.closeTrader(); this.slowUntil = 0;
+  },
+  randomCell() { const cells = World.cells.filter((c) => c.walk && c.floorH === 0 && !c.prop); const c = choice(cells); return V3(cellX(c.c) + rand(-0.8, 0.8), 0, cellZ(c.r) + rand(-0.8, 0.8)); },
+  update(dt) {
+    if (Game.state !== 'playing') return;
+    const now = Game.time, p = Game.player;
+    this.updateHeld(dt); this.updateThrown(); this.updatePortals(); this.updateHook(p, dt);
+    if (funOn('lava')) this.updateLava(dt);
+    if (funOn('randomgun') && (Game.phase === 'live' || Game.free)) { this.gunT -= dt; if (this.gunT <= 0) { this.gunT = 20; this.shuffleGuns(); } }
+    this.updateChickens(dt); this.updateTrader(dt); this.updateGhost(dt);
+    if (funOn('bigheads')) for (const a of Game.actors) { a.headScale = 2; if (a.model && a.model.neck && a.model.neck.scale.x !== 1.9) a.model.neck.scale.setScalar(1.9); }
+    $('slowFx') && $('slowFx').classList.toggle('on', this.timeScale() < 1);
+    void now;
+  },
+
+  // ---------------------------------------------------------- gravity gun & portal gun
+  tool(p, w, l, r) {
+    const now = Game.time; if (now - w.drawStart < (w.def.draw || 0.6)) return;
+    const eye = p.eye(_vF), f = p.forward(_vF2);
+    if (w.def.tool === 'grav') {
+      if (l) {
+        if (this.held) { // throw it
+          const a = this.held; this.held = null; a.heldBy = null; a.vel.copy(f).multiplyScalar(26); a.vel.y += 3; a.onGround = false; a.jumped = true; a.flyUntil = now + 0.4; a.thrownBy = p; a.thrownUntil = now + 1.6; a.lastSpd = 26;
+          Sound.shot('gl', eye, true); VM.fire(1.4); FX.shake = Math.max(FX.shake, 0.15);
+        } else { // grab whoever is in front
+          let best = null, bt = 11;
+          for (const a of Game.actors) { if (!a.alive || a === p) continue; const h = rayHitActor(a, eye.x, eye.y, eye.z, f.x, f.y, f.z, bt); if (h) { best = a; bt = h.t; } }
+          const wall = World.raycast(eye.x, eye.y, eye.z, f.x, f.y, f.z, bt);
+          if (best && wall < 0) { this.held = best; best.heldBy = p; Sound.mech('zoom'); if (best.isBot && best.ai) best.ai.onDamaged && best.ai.onDamaged(p); }
+          else { const c = this.chickenOnRay(eye, f, 11); if (c) { this.killChicken(c, p, f.clone().multiplyScalar(8)); } else Sound.dryFire(); }
+        }
+      }
+      if (r && now > (w.blastNext || 0)) { // shove everything in a cone
+        w.blastNext = now + 0.9; Sound.shot('gl', eye, true); VM.fire(1.8); FX.shake = Math.max(FX.shake, 0.2);
+        if (this.held) { this.held.heldBy = null; this.held = null; }
+        for (const a of Game.actors) {
+          if (!a.alive || a === p) continue; const d = _vF3.copy(a.pos).add(UP).sub(eye), L = d.length(); if (L > 9 || d.normalize().dot(f) < 0.75) continue;
+          a.vel.addScaledVector(f, 18 * (1 - L / 12)); a.vel.y = Math.max(a.vel.y, 5); a.onGround = false; a.jumped = true; a.flyUntil = now + 0.4; a.thrownBy = p; a.thrownUntil = now + 1.4; a.lastSpd = a.vel.length();
+          if (a.isBot && a.ai && a.ai.onDamaged) a.ai.onDamaged(p);
+        }
+        for (const c of this.chickens.slice()) { const d = _vF3.copy(c.pos).sub(eye); if (d.length() < 9 && d.normalize().dot(f) < 0.75 === false) this.killChicken(c, p, f.clone().multiplyScalar(14)); }
+        for (const d of Drops.list) { const v = _vF3.copy(d.pos).sub(eye); if (v.length() < 9 && v.normalize().dot(f) > 0.75) { d.vel = d.vel || V3(); d.vel.copy(f).multiplyScalar(12); d.vel.y = 5; d.rest = false; } }
+        const t = World.raycast(eye.x, eye.y, eye.z, f.x, f.y, f.z, 9); if (t >= 0 && World.hit.box && World.hit.box.destr) Destr.hit(World.hit.box.destr, 200, p, V3(World.hit.x, World.hit.y, World.hit.z));
+        for (let k = 0; k < 14; k++) FX.add.spawn({ x: eye.x + f.x, y: eye.y + f.y - 0.1, z: eye.z + f.z, vx: f.x * rand(8, 16) + rand(-2, 2), vy: f.y * rand(8, 16) + rand(-2, 2), vz: f.z * rand(8, 16) + rand(-2, 2), size: 0.05, life: 0.3, stretch: 0.02, frame: 1, r: 1, g: 0.6, b: 0.2, alpha: 1, alpha1: 0 });
+      }
+    } else if (w.def.tool === 'portal' && (l || r) && now > (w.portalNext || 0)) {
+      w.portalNext = now + 0.35; const i = l ? 0 : 1;
+      const t = World.raycast(eye.x, eye.y, eye.z, f.x, f.y, f.z, 80);
+      if (t < 0) { Sound.dryFire(); return; }
+      const H = World.hit; this.placePortal(i, V3(H.x, H.y, H.z), V3(H.nx, H.ny, H.nz));
+      const P = VM.cur && VM.cur.parts; if (P && P.tube) P.tube.material = i ? MAT.portalOrange : MAT.portalBlue;
+      VM.fire(0.7); this.portalSound(eye, i);
+    }
+  },
+  updateHeld(dt) {
+    const a = this.held, p = Game.player; if (!a) return;
+    if (!a.alive || !p.alive || !p.weapon || p.weapon.def.tool !== 'grav') { a.heldBy = null; this.held = null; return; }
+    const eye = p.eye(_vF), f = p.forward(_vF2), tgt = _vF3.copy(eye).addScaledVector(f, 2.6); tgt.y -= 1.0;
+    // don't pull them through walls
+    const t = World.raycast(eye.x, eye.y, eye.z, f.x, f.y, f.z, 2.6); if (t >= 0) tgt.copy(eye).addScaledVector(f, Math.max(0.8, t - 0.5)).add(_vF.set(0, -1, 0));
+    a.pos.lerp(tgt, 1 - Math.exp(-dt * 14)); a.vel.set(0, 0, 0); a.onGround = false;
+    if (Math.random() < 0.3) FX.add.spawn({ x: a.pos.x + rand(-0.3, 0.3), y: a.pos.y + rand(0.2, 1.7), z: a.pos.z + rand(-0.3, 0.3), vx: 0, vy: 0.4, vz: 0, size: 0.06, life: 0.3, frame: 1, r: 1, g: 0.6, b: 0.2, alpha: 0.8, alpha1: 0 });
+  },
+  updateThrown() {
+    const now = Game.time;
+    for (const a of Game.actors) {
+      if (!a.alive || !(a.thrownUntil > now)) continue;
+      const s = Math.hypot(a.vel.x, a.vel.z), drop = (a.lastSpd || 0) - s; a.lastSpd = s;
+      if (drop > 7) { // slammed into something
+        applyDamage(a, a.thrownBy, Math.min(120, drop * 7), 'fall', WEAPONS.gravgun, a.pos.clone().add(UP), UP, false);
+        FX.impact(a.pos.x, a.pos.y + 1, a.pos.z, 0, 1, 0, 'stone', false); Sound.impact(a.pos, 'wood'); a.thrownUntil = 0;
+      }
+    }
+  },
+  placePortal(i, pos, n) {
+    this.removePortal(i);
+    const col = i ? 0xff8a1a : 0x3aa8ff, g = new THREE.Group();
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.07, 10, 40), new THREE.MeshBasicMaterial({ color: col }));
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.6, 40), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    const swirl = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.55, 40, 1, 0, Math.PI * 1.3), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    g.add(ring, disc, swirl); g.position.copy(pos).addScaledVector(n, 0.03);
+    g.lookAt(_vF3.copy(g.position).add(n)); if (Math.abs(n.y) < 0.5) g.scale.set(1, 1.55, 1); // tall on walls
+    scene.add(g); const light = new THREE.PointLight(col, 6, 6, 2); light.position.copy(pos).addScaledVector(n, 0.4); scene.add(light);
+    this.portals[i] = { pos: pos.clone(), n: n.clone().normalize(), mesh: g, swirl, light, wall: Math.abs(n.y) < 0.5 };
+  },
+  removePortal(i) { const P = this.portals[i]; if (!P) return; scene.remove(P.mesh); scene.remove(P.light); this.portals[i] = null; },
+  portalSound(pos, i) { const o = Sound.out(pos, { gain: 0.5 }); if (o) { Sound.tone(o, Sound.t, 0.25, { f: i ? 520 : 760, f2: i ? 260 : 1400, gain: 0.35, type: 'sawtooth' }); Sound.noise(o, Sound.t, 0.3, { f: 1500, f2: 400, gain: 0.4 }); } },
+  updatePortals() {
+    for (const P of this.portals) if (P) { P.swirl.rotation.z += 0.08; P.light.intensity = 5 + Math.sin(Game.time * 6) * 1.5; }
+    const [A, B] = this.portals; if (!A || !B) return; const now = Game.time;
+    for (const a of Game.actors) {
+      if (!a.alive || a.portalT > now) continue;
+      for (const [P, Q] of [[A, B], [B, A]]) {
+        const c = _vF.copy(a.pos); c.y += P.wall ? 0.9 : 0; const d = _vF2.subVectors(c, P.pos), along = d.dot(P.n);
+        const lv = _vF3.copy(d).addScaledVector(P.n, -along), lat = P.wall ? Math.hypot(lv.x, lv.z, lv.y / 1.55) : lv.length();
+        const into = a.vel.dot(P.n) < -0.5 || (!P.wall && P.n.y > 0.5);
+        if (along < 0.45 && along > -0.3 && lat < (P.wall ? 0.75 : 0.7) && into) { this.teleport(a, P, Q); break; }
+      }
+    }
+  },
+  teleport(a, P, Q) {
+    const sp = Math.max(4, a.vel.length()); a.portalT = Game.time + 0.5;
+    if (Q.wall) {
+      a.pos.copy(Q.pos).addScaledVector(Q.n, 0.75); a.pos.y = Math.max(World.heightAt(a.pos.x, a.pos.z, Q.pos.y + 0.5), Q.pos.y - 0.9);
+      a.vel.copy(Q.n).multiplyScalar(sp); a.vel.y = Math.max(0, a.vel.y); a.yaw = Math.atan2(-Q.n.x, -Q.n.z);
+    } else if (Q.n.y > 0) { a.pos.copy(Q.pos).add(_vF.set(0, 0.25, 0)); a.vel.set(0, Math.max(sp, 7), 0); a.onGround = false; a.jumped = true; a.flyUntil = Game.time + 0.3; }
+    else { a.pos.copy(Q.pos).add(_vF.set(0, -1.95, 0)); a.vel.set(0, -2, 0); a.onGround = false; }
+    this.portalSound(a.pos, 1);
+    if (a === Game.player) { FX.shake = Math.max(FX.shake, 0.1); }
+  },
+
+  // ---------------------------------------------------------- grappling hook
+  updateHook(p, dt) {
+    if (!p || !p.alive) { if (this.rope) this.rope.visible = false; return; }
+    if (p.hasHook && Input.hit('KeyH') && !UI.cursorWanted()) {
+      if (p.hook) p.hook = null;
+      else { const eye = p.eye(_vF), f = p.forward(_vF2), t = World.raycast(eye.x, eye.y, eye.z, f.x, f.y, f.z, 38); if (t >= 0) { p.hook = { pt: V3(World.hit.x, World.hit.y, World.hit.z), t: Game.time }; Sound.mech('bolt'); } else Sound.dryFire(); }
+    } else if (!p.hasHook && Input.hit('KeyH') && !UI.cursorWanted()) HUD.chat('Крюка нет: купи в магазине (Снаряжение → Крюк-кошка).', 'sys');
+    if (p.hook) {
+      const to = _vF3.subVectors(p.hook.pt, p.eye(_vF)), L = to.length();
+      if (L < 1.6 || Game.time - p.hook.t > 3.5 || Input.hit('Space')) { p.hook = null; p.vel.y = Math.max(p.vel.y, 4); }
+      else { to.normalize(); p.vel.lerp(_vF2.copy(to).multiplyScalar(22), 1 - Math.exp(-dt * 6)); p.vel.y += 20 * dt; p.onGround = false; p.jumped = true; p.flyUntil = Game.time + 0.2; }
+    }
+    if (!this.rope) { this.rope = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V3(), V3()]), new THREE.LineBasicMaterial({ color: 0x2b2b2b })); this.rope.frustumCulled = false; scene.add(this.rope); }
+    this.rope.visible = !!p.hook;
+    if (p.hook) { const a = p.eye(_vF).add(_vF2.set(-Math.cos(p.yaw) * 0.15, -0.25, Math.sin(p.yaw) * 0.15)), pos = this.rope.geometry.attributes.position; pos.setXYZ(0, a.x, a.y, a.z); pos.setXYZ(1, p.hook.pt.x, p.hook.pt.y, p.hook.pt.z); pos.needsUpdate = true; }
+  },
+
+  // ---------------------------------------------------------- lava
+  updateLava(dt) {
+    if (!(Game.phase === 'live' || Game.free)) return;
+    this.lavaT -= dt;
+    if (!this.lavaOn && this.lavaT <= 5 && !this.lavaWarned) {
+      this.lavaWarned = true; HUD.big('ЛАВА!', 'через 5 секунд — лезь на крыши, ящики, лестницы', 'neutral', 2.5); Sound.ui('deny');
+      for (const a of Game.actors) if (a.isBot && a.alive && a.ai && a.ai.nearRoof && !a.ai.roof) { try { const i = a.ai.nearRoof(70); if (i >= 0) a.ai.beginRoof(i); } catch (e) { /* no roof here */ } }
+    }
+    if (!this.lavaOn && this.lavaT <= 0) { this.lavaOn = 9; this.lavaWarned = false; this.startLava(); }
+    if (this.lavaOn) {
+      this.lavaOn -= dt; const k = smoothstep(0, 1.5, 9 - this.lavaOn) * smoothstep(0, 1.5, this.lavaOn), lv = 0.05 + k * 0.4;
+      this.lava.position.y = lv; this.lava.material.emissiveIntensity = 1.6 + Math.sin(Game.time * 3) * 0.3; this.lavaTex.offset.x += dt * 0.02; this.lavaTex.offset.y += dt * 0.013;
+      this.lavaTick = (this.lavaTick || 0) - dt;
+      if (this.lavaTick <= 0) { this.lavaTick = 0.5; for (const a of Game.actors) if (a.alive && a.pos.y < lv + 0.05 && !a.climbing) { applyDamage(a, null, 7, 'fire', WEAPONS.lava, a.pos.clone(), UP, false); a.burnUntil = Math.max(a.burnUntil || 0, Game.time + 0.6); } }
+      if (Math.random() < 0.5) { const c = camera.position; FX.add.spawn({ x: c.x + rand(-12, 12), y: lv + 0.05, z: c.z + rand(-12, 12), vx: 0, vy: rand(1, 3), vz: 0, size: rand(0.08, 0.2), size1: 0.02, life: rand(0.3, 0.7), frame: 0, r: 1, g: 0.5, b: 0.1, alpha: 1, alpha1: 0, grav: 4 }); }
+      if (this.lavaOn <= 0) { this.endLava(); this.lavaT = 30; HUD.chat('Лава ушла.', 'sys'); }
+    }
+  },
+  startLava() {
+    if (!this.lava) {
+      const c = makeCanvas(256, 256), x = c.getContext('2d'), R = mulberry32(5); x.fillStyle = '#7a1500'; x.fillRect(0, 0, 256, 256);
+      for (let k = 0; k < 160; k++) { const g = x.createRadialGradient(0, 0, 0, 0, 0, 30); g.addColorStop(0, 'rgba(255,220,80,0.9)'); g.addColorStop(0.5, 'rgba(255,90,0,0.5)'); g.addColorStop(1, 'rgba(120,10,0,0)'); x.save(); x.translate(R() * 256, R() * 256); x.scale(1, 0.6); x.fillStyle = g; x.beginPath(); x.arc(0, 0, 10 + R() * 25, 0, TAU); x.fill(); x.restore(); }
+      this.lavaTex = new THREE.CanvasTexture(c); this.lavaTex.wrapS = this.lavaTex.wrapT = THREE.RepeatWrapping; this.lavaTex.repeat.set(30, 30); this.lavaTex.colorSpace = THREE.SRGBColorSpace;
+      this.lava = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardMaterial({ color: 0x401000, emissive: 0xffffff, emissiveMap: this.lavaTex, emissiveIntensity: 1.6, roughness: 0.6, transparent: true, opacity: 0.93 }));
+      this.lava.rotation.x = -Math.PI / 2;
+    }
+    this.lava.position.y = 0.05; scene.add(this.lava); Sound.ui('deny');
+  },
+  endLava() { if (this.lava && this.lava.parent) scene.remove(this.lava); this.lavaOn = 0; this.lavaWarned = false; },
+
+  // ---------------------------------------------------------- random guns for everyone
+  shuffleGuns() {
+    const pool = Object.values(WEAPONS).filter((d) => (d.slot === 1 || d.slot === 2) && d.price > 0 && !d.tool && d.id !== 'goldak' && !d.id.startsWith('__') && !d.zap);
+    for (const a of Game.actors) { if (!a.alive) continue; const d = choice(pool); a.slots[d.slot] = makeWeapon(d.id); a.select(d.slot, true); }
+    HUD.big('Смена оружия!', 'у всех случайные пушки', 'neutral', 1.6); Sound.ui('buy'); if (Game.player) HUD.slots();
+  },
+
+  // ---------------------------------------------------------- chickens
+  chickenMesh() {
+    const g = new THREE.Group();
+    if (!MAT.chick) { MAT.chick = new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: 0.9 }); MAT.chickRed = new THREE.MeshStandardMaterial({ color: 0xd8261c, roughness: 0.6 }); MAT.chickBeak = new THREE.MeshStandardMaterial({ color: 0xf0a51e, roughness: 0.6 }); }
+    const body = part(g, new THREE.SphereGeometry(0.17, 12, 9), MAT.chick, 0, 0.27, 0); body.scale.set(0.85, 0.85, 1.15);
+    part(g, new THREE.SphereGeometry(0.09, 10, 8), MAT.chick, 0, 0.44, -0.13);
+    part(g, geoBox(0.025, 0.06, 0.07), MAT.chickRed, 0, 0.53, -0.13); part(g, geoBox(0.03, 0.035, 0.03), MAT.chickRed, 0, 0.38, -0.2);
+    const beak = part(g, new THREE.ConeGeometry(0.025, 0.06, 6), MAT.chickBeak, 0, 0.43, -0.23); beak.rotation.x = -Math.PI / 2;
+    const tail = part(g, geoBox(0.1, 0.12, 0.06), MAT.chick, 0, 0.36, 0.17); tail.rotation.x = -0.5;
+    const legs = []; for (const s of [-1, 1]) legs.push(part(g, geoBox(0.02, 0.14, 0.02), MAT.chickBeak, s * 0.06, 0.07, 0));
+    g.userData.legs = legs; return g;
+  },
+  spawnChicken() { const pos = this.randomCell(); pos.y = World.heightAt(pos.x, pos.z, 1); const mesh = this.chickenMesh(); mesh.position.copy(pos); scene.add(mesh); this.chickens.push({ pos, mesh, yaw: rand(0, TAU), t: 0, walk: 0, flee: 0, peck: 0 }); },
+  updateChickens(dt) {
+    if (!funOn('chickens')) return;
+    const now = Game.time;
+    for (const c of this.chickens) {
+      c.t -= dt;
+      let threat = null; for (const a of Game.actors) if (a.alive && a.pos.distanceTo(c.pos) < (a.weapon && a.weapon.lastShot > now - 1 ? 9 : 2.8)) { threat = a; break; }
+      if (threat) { c.yaw = Math.atan2(c.pos.x - threat.pos.x, c.pos.z - threat.pos.z) + Math.PI; c.walk = 4.2; c.t = 0.6; if (Math.random() < 0.02) this.cluck(c.pos, true); }
+      else if (c.t <= 0) { c.t = rand(1, 3.5); c.walk = Math.random() < 0.55 ? rand(0.8, 1.4) : 0; c.yaw += rand(-1.5, 1.5); if (Math.random() < 0.25) this.cluck(c.pos); }
+      if (c.walk > 0) {
+        const fx = -Math.sin(c.yaw), fz = -Math.cos(c.yaw), nx = c.pos.x + fx * c.walk * dt, nz = c.pos.z + fz * c.walk * dt;
+        if (World.raycast(c.pos.x, c.pos.y + 0.25, c.pos.z, fx, 0, fz, 0.4) < 0) { c.pos.x = nx; c.pos.z = nz; const h = World.heightAt(nx, nz, c.pos.y + 0.5); if (Math.abs(h - c.pos.y) < 0.6) c.pos.y = h; } else { c.yaw += Math.PI * rand(0.5, 1.5); }
+        c.mesh.userData.legs.forEach((L, i) => { L.rotation.x = Math.sin(now * 18 + i * Math.PI) * 0.6; });
+      } else { c.peck = Math.max(0, Math.sin(now * 3 + c.pos.x)); }
+      c.mesh.position.set(c.pos.x, c.pos.y + (c.walk > 3 ? Math.abs(Math.sin(now * 20)) * 0.06 : 0), c.pos.z); c.mesh.rotation.set(c.walk ? 0 : c.peck * 0.4, c.yaw, 0);
+    }
+  },
+  cluck(pos, scared) { if (!Sound.ctx || pos.distanceTo(camera.position) > 25) return; const o = Sound.out(pos, { gain: 0.5 }); if (!o) return; const t = Sound.t; for (let k = 0; k < (scared ? 3 : 2); k++) Sound.tone(o, t + k * 0.11, 0.08, { f: scared ? 1100 : 750, f2: scared ? 700 : 520, gain: 0.3, type: 'square' }); },
+  chickenOnRay(o, d, maxT) { let best = null, bt = maxT; for (const c of this.chickens) { const cx = c.pos.x - o.x, cy = c.pos.y + 0.3 - o.y, cz = c.pos.z - o.z, t = cx * d.x + cy * d.y + cz * d.z; if (t < 0 || t > bt) continue; const px = cx - d.x * t, py = cy - d.y * t, pz = cz - d.z * t; if (px * px + py * py + pz * pz < 0.08) { best = c; bt = t; } } return best; },
+  killChicken(c, by, push) {
+    const i = this.chickens.indexOf(c); if (i < 0) return; this.chickens.splice(i, 1); scene.remove(c.mesh);
+    for (let k = 0; k < 18; k++) FX.alpha.spawn({ x: c.pos.x, y: c.pos.y + 0.3, z: c.pos.z, vx: rand(-2, 2) + (push ? push.x * 0.3 : 0), vy: rand(0.5, 3), vz: rand(-2, 2) + (push ? push.z * 0.3 : 0), size: rand(0.04, 0.08), size1: 0.03, life: rand(1.2, 2.2), frame: 3, r: 0.97, g: 0.96, b: 0.92, alpha: 1, alpha1: 0.8, grav: 1.2, drag: 2, rv: rand(-6, 6) });
+    this.cluck(c.pos, true);
+    if (by === Game.player) { Profile.coin(1); if (!this.chickHint) { this.chickHint = true; HUD.chat('Курица! +1 ◆', 'sys'); } }
+    Game.after(25, () => { if (funOn('chickens') && Game.state === 'playing') this.spawnChicken(); });
+  },
+
+  // ---------------------------------------------------------- the trader
+  placeTrader() {
+    if (!this.trader) {
+      const g = new THREE.Group(), robe = new THREE.MeshStandardMaterial({ color: 0x3b2a6b, roughness: 0.85 }), gold = new THREE.MeshStandardMaterial({ color: 0xe0b040, metalness: 0.9, roughness: 0.3 });
+      part(g, new THREE.ConeGeometry(0.42, 1.4, 12), robe, 0, 0.7, 0); part(g, new THREE.SphereGeometry(0.17, 12, 10), MAT.chick || robe, 0, 1.52, 0).material = new THREE.MeshStandardMaterial({ color: 0xc89870, roughness: 0.7 });
+      const hat = part(g, new THREE.ConeGeometry(0.26, 0.5, 12), robe, 0, 1.85, 0); hat.rotation.z = 0.15; part(g, new THREE.TorusGeometry(0.24, 0.03, 6, 16), gold, 0, 1.64, 0).rotation.x = Math.PI / 2;
+      part(g, new THREE.SphereGeometry(0.2, 10, 8), new THREE.MeshStandardMaterial({ color: 0x8a5a2b, roughness: 0.9 }), 0.32, 0.55, 0.15); // a sack of goods
+      const c = makeCanvas(256, 96), x = c.getContext('2d'); x.fillStyle = 'rgba(0,0,0,0.6)'; x.fillRect(0, 0, 256, 96); x.fillStyle = '#ffd34d'; x.font = 'bold 34px sans-serif'; x.textAlign = 'center'; x.fillText('◆ ТОРГОВЕЦ', 128, 44); x.font = 'bold 24px sans-serif'; x.fillStyle = '#fff'; x.fillText('[E]', 128, 80);
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false })); sp.scale.set(1.5, 0.56, 1); sp.position.y = 2.5; g.add(sp);
+      const light = new THREE.PointLight(0xffc860, 3, 6, 2); light.position.y = 1.8; g.add(light);
+      this.trader = { mesh: g, pos: V3() };
+    }
+    const pos = this.randomCell(); pos.y = World.heightAt(pos.x, pos.z, 1); this.trader.pos.copy(pos); this.trader.mesh.position.copy(pos); scene.add(this.trader.mesh);
+  },
+  updateTrader(dt) {
+    const T = this.trader; if (!T || !T.mesh.parent) return; const p = Game.player;
+    T.mesh.rotation.y += dt * 0.4; T.mesh.position.y = T.pos.y + Math.sin(Game.time * 2) * 0.03;
+    const near = p && p.alive && p.pos.distanceTo(T.pos) < 2.4;
+    if (near && !this.traderHint) { this.traderHint = true; HUD.chat('Торговец рядом: E — посмотреть товары за ◆.', 'sys'); }
+    if (near && Input.hit('KeyE') && !this.traderOpen) this.openTrader();
+    if (this.traderOpen && (!near || Input.hit('Escape'))) this.closeTrader();
+  },
+  TRADE: [
+    ['med', 'Аптечка +50 HP', 30], ['armor', 'Броня и шлем', 40], ['hook', 'Крюк-кошка', 60], ['gravgun', 'Гравипушка', 150],
+    ['portalgun', 'Портальная пушка', 150], ['minigun', 'Миниган', 200], ['goldak', 'Золотой АК', 300], ['mystery', 'Таинственный предмет в инвентарь', 120],
+  ],
+  openTrader() {
+    let el = $('trader'); if (!el) { el = document.createElement('div'); el.id = 'trader'; document.body.appendChild(el); }
+    const D = Profile.data;
+    el.innerHTML = `<div class="tr-in"><div class="cs-head"><h2>Торговец</h2><div class="cs-bal">◆ ${D.coins}</div></div><p class="sub">Плата — ◆ из кейсов. Купленное выдаётся сразу.</p><div class="tr-list">${this.TRADE.map(([id, n, c]) => `<button data-id="${id}" class="${D.coins >= c ? '' : 'no'}"><b>${n}</b><span>◆ ${c}</span></button>`).join('')}</div><button class="tr-close">Закрыть (Esc)</button></div>`;
+    el.classList.remove('hidden'); this.traderOpen = true; if (document.pointerLockElement) document.exitPointerLock();
+    el.querySelectorAll('.tr-list button').forEach((b) => b.addEventListener('click', () => this.trade(b.dataset.id)));
+    el.querySelector('.tr-close').addEventListener('click', () => this.closeTrader());
+    Sound.ui('click');
+  },
+  closeTrader() { const el = $('trader'); if (el) el.classList.add('hidden'); if (this.traderOpen) { this.traderOpen = false; if (Game.state === 'playing' && !Game.paused && !Input.fallback) requestLock(true); } },
+  trade(id) {
+    const [, n, c] = this.TRADE.find((t) => t[0] === id), D = Profile.data, p = Game.player;
+    if (D.coins < c || !p.alive) { Sound.ui('deny'); return; }
+    D.coins -= c; Profile.save(); Sound.ui('buy');
+    if (id === 'med') p.hp = Math.min(150, p.hp + 50);
+    else if (id === 'armor') { p.armor = 100; p.helmet = true; }
+    else if (id === 'hook') p.hasHook = true;
+    else if (id === 'mystery') { const it = Cases.roll('neon'); it.id = D.nextId++; it.wear = +it.wear.toFixed(4); D.inv.unshift(it); Profile.save(); HUD.chat(`Торговец отдал: ${Cases.title(it)} (${RARITY[it.r].name}). Смотри в инвентаре.`, 'sys'); }
+    else { const d = WEAPONS[id]; p.slots[d.slot] = makeWeapon(id); p.select(d.slot, true); HUD.slots(); }
+    HUD.chat('Куплено: ' + n, 'sys'); this.openTrader();
+  },
+
+  // ---------------------------------------------------------- night ghosts
+  updateGhost(dt) {
+    const G = this.ghost;
+    if (!G) {
+      if (!funOn('ghosts') || Env.dark < 0.5 || isBR()) return;
+      this.ghostT -= dt; if (this.ghostT > 0) return; this.ghostT = rand(50, 80);
+      const g = new THREE.Group(), m = new THREE.MeshBasicMaterial({ color: 0x9ff7ff, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false });
+      part(g, new THREE.SphereGeometry(0.28, 14, 10), m, 0, 1.55, 0); const body = part(g, new THREE.ConeGeometry(0.4, 1.3, 14, 1, true), m, 0, 0.85, 0); body.rotation.x = Math.PI;
+      for (const s of [-1, 1]) part(g, new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: 0x001018 }), s * 0.1, 1.6, -0.24);
+      const light = new THREE.PointLight(0x8ff0ff, 5, 9, 2); light.position.y = 1.3; g.add(light);
+      const pos = this.randomCell(); g.position.copy(pos); scene.add(g);
+      this.ghost = { mesh: g, pos, hp: 220, life: 30, to: this.randomCell(), mat: m };
+      HUD.chat('По карте бродит призрак… Убей его — получишь предмет.', 'sys');
+      const o = Sound.out(null, { gain: 0.4 }); if (o) Sound.tone(o, Sound.t, 1.6, { f: 220, f2: 140, gain: 0.25, type: 'sine', attack: 0.4 });
+      return;
+    }
+    G.life -= dt; if (G.life <= 0 || Env.dark < 0.3) { this.ghostVanish(false); return; }
+    const to = _vF.subVectors(G.to, G.pos); to.y = 0; if (to.length() < 1) G.to = this.randomCell(); else G.pos.addScaledVector(to.normalize(), dt * 2.2);
+    G.mesh.position.set(G.pos.x, World.heightAt(G.pos.x, G.pos.z, 3) + 0.3 + Math.sin(Game.time * 2) * 0.25, G.pos.z); G.mesh.rotation.y = Math.atan2(-to.x, -to.z);
+    G.mat.opacity = 0.35 + Math.sin(Game.time * 5) * 0.12;
+  },
+  ghostOnRay(o, d, maxT) { const G = this.ghost; if (!G) return null; const c = G.mesh.position, cx = c.x - o.x, cy = c.y + 1.1 - o.y, cz = c.z - o.z, t = cx * d.x + cy * d.y + cz * d.z; if (t < 0 || t > maxT) return null; const px = cx - d.x * t, py = cy - d.y * t, pz = cz - d.z * t; return px * px + py * py + pz * pz < 0.36 ? t : null; },
+  hitGhost(dmg, by) {
+    const G = this.ghost; if (!G) return; G.hp -= dmg;
+    for (let k = 0; k < 4; k++) FX.add.spawn({ x: G.mesh.position.x, y: G.mesh.position.y + 1.2, z: G.mesh.position.z, vx: rand(-2, 2), vy: rand(-1, 2), vz: rand(-2, 2), size: 0.08, life: 0.4, frame: 1, r: 0.6, g: 1, b: 1, alpha: 1, alpha1: 0 });
+    if (by === Game.player) HUD.hitMarker(false, G.hp <= 0);
+    if (G.hp <= 0) this.ghostVanish(true, by);
+  },
+  ghostVanish(killed, by) {
+    const G = this.ghost; if (!G) return; this.ghost = null;
+    const c = G.mesh.position; for (let k = 0; k < 30; k++) FX.add.spawn({ x: c.x, y: c.y + 1.1, z: c.z, vx: rand(-3, 3), vy: rand(0, 4), vz: rand(-3, 3), size: rand(0.06, 0.14), life: rand(0.6, 1.2), frame: 1, r: 0.6, g: 1, b: 1, alpha: 1, alpha1: 0, grav: -1 });
+    scene.remove(G.mesh);
+    if (killed && by === Game.player) {
+      const D = Profile.data, it = Cases.roll('neon'); it.id = D.nextId++; it.wear = +it.wear.toFixed(4); D.inv.unshift(it); D.coins += 100; Profile.save();
+      HUD.big('Призрак повержен!', `${Cases.title(it)} · +100 ◆`, 'neutral', 3); Sound.ui('buy');
+    }
+  },
+};
+
+// ------------------------------------------------------------ hooking it into the game
+{
+  const sm = Game.startMatch, sr = Game.startRound, gu = Game.update, fu = FX.update, pw = Game.playerWeapons, cw = UI.cursorWanted, ta = tryAttack, tb = traceBullet, ka = killActor, rx = Rockets.explode, bu = BotAI.prototype.update, bd = BotAI.prototype.onDamaged;
+  Game.startMatch = function (cfg) { const r = sm.call(this, cfg); Fun.start(); return r; };
+  Game.startRound = function (...a) { const r = sr.apply(this, a); Fun.onRound(); return r; };
+  Game.update = function (dt) { dt *= Fun.timeScale(); gu.call(this, dt); Fun.update(dt); };
+  FX.update = function (dt) { return fu.call(this, dt * Fun.timeScale()); };
+  UI.cursorWanted = function () { return cw.call(this) || Fun.traderOpen; };
+  Game.playerWeapons = function (dt) {
+    const p = this.player, w = p && p.weapon;
+    if (!w || !w.def.tool) return pw.call(this, dt);
+    const l = Input.lmbDown, r = Input.rmbDown, lh = Input.lmb, rh = Input.rmb;
+    Input.lmbDown = Input.rmbDown = Input.lmb = Input.rmb = false; pw.call(this, dt); Input.lmb = lh; Input.rmb = rh; Input.lmbDown = l; Input.rmbDown = r;
+    if (Game.phase !== 'freeze' && !p.sprinting) Fun.tool(p, w, l || (Touch.on && Input.lmb && !this.lmbWas), r);
+    this.lmbWas = Input.lmb;
+  };
+  tryAttack = function (a, heavy = false) { const w = a.weapon; if (a.heldBy || (w && w.def.tool)) return false; return ta(a, heavy); };
+  traceBullet = function (shooter, o, dir, d) {
+    const end = tb(shooter, o, dir, d), L = end.distanceTo(o);
+    const c = Fun.chickenOnRay(o, dir, L); if (c) Fun.killChicken(c, shooter, dir.clone().multiplyScalar(6));
+    const gt = Fun.ghostOnRay(o, dir, L); if (gt !== null) Fun.hitGhost(d.dmg || 20, shooter);
+    return end;
+  };
+  killActor = function (v, att, def, head, wallbang, dir) {
+    if (v === Fun.held) { Fun.held = null; v.heldBy = null; }
+    ka(v, att, def, head, wallbang, dir);
+    if (funOn('slowmo') && head && att === Game.player) Fun.slowUntil = performance.now() + 1800;
+    if (funOn('boom')) { const pos = v.pos.clone(), by = att; Game.after(1.1, () => { if (Game.state !== 'playing') return; FX.explosion && FX.explosion(pos.clone().add(UP)); Rockets.explode(pos.clone().add(_vF.set(0, 0.5, 0)), by, 4.2, 70, WEAPONS.he || WEAPONS.rpg); }); }
+  };
+  Rockets.explode = function (pos, owner, R = 6.5, ...rest) { for (const c of Fun.chickens.slice()) if (c.pos.distanceTo(pos) < R) Fun.killChicken(c, owner, c.pos.clone().sub(pos).normalize().multiplyScalar(10)); if (Fun.ghost && Fun.ghost.mesh.position.distanceTo(pos) < R) Fun.hitGhost(150, owner); return rx.call(this, pos, owner, R, ...rest); };
+  // pacifist bots dance and chase chickens until somebody hurts them
+  BotAI.prototype.update = function (dt) {
+    if (!funOn('pacifist') || this.provoked || Game.phase === 'freeze') return bu.call(this, dt);
+    const a = this.a, now = Game.time; this.danceT = (this.danceT || 0) - dt;
+    let tgt = null, bd2 = 14; for (const c of Fun.chickens) { const d = c.pos.distanceTo(a.pos); if (d < bd2) { bd2 = d; tgt = c; } }
+    let wx = 0, wz = 0, jump = false;
+    if (tgt && bd2 > 1) { const dx = tgt.pos.x - a.pos.x, dz = tgt.pos.z - a.pos.z, L = Math.hypot(dx, dz); wx = dx / L; wz = dz / L; a.yaw = Math.atan2(-dx, -dz); }
+    else { a.yaw += dt * 4; if (this.danceT <= 0) { this.danceT = rand(0.4, 1.0); jump = Math.random() < 0.5; a.crouching = !a.crouching && Math.random() < 0.5; } }
+    a.pitch = Math.sin(now * 6) * 0.3; a.walking = false; a.sprinting = false;
+    moveActor(a, wx, wz, jump, dt);
+  };
+  BotAI.prototype.onDamaged = function (att) { if (att) for (const b of Game.actors) if (b.isBot && b.ai && b.team === this.a.team && b.pos.distanceTo(this.a.pos) < 15) b.ai.provoked = true; this.provoked = true; return bd.call(this, att); };
+}
+// big heads are bigger targets
+{
+  const rh = rayHitActor;
+  rayHitActor = function (a, ox, oy, oz, dx, dy, dz, maxT) {
+    const s = a.headScale || 1; if (s === 1) return rh(a, ox, oy, oz, dx, dy, dz, maxT);
+    const r = rh(a, ox, oy, oz, dx, dy, dz, maxT); if (r && r.group === 'head') return r;
+    const c = a.crouchAmt, hy = a.pos.y + lerp(1.66, 1.2, c) + 0.12, cx = a.pos.x - ox, cy = hy - oy, cz = a.pos.z - oz, t = cx * dx + cy * dy + cz * dz;
+    if (t > 0 && t < (r ? r.t : maxT)) { const px = cx - dx * t, py = cy - dy * t, pz = cz - dz * t; if (px * px + py * py + pz * pz < 0.26 * 0.26) return { t, group: 'head' }; }
+    return r;
+  };
+}
+
+// ------------------------------------------------------------ the toggles in the match setup
+{
+  const host = $('btnStart');
+  if (host && !$('funSeg')) {
+    host.insertAdjacentHTML('beforebegin', `<h3>Приколы</h3><div class="seg fun" id="funSeg">${FUN_OPTS.map(([k, n]) => `<button data-k="${k}" class="${Settings.fun[k] ? 'on' : ''}">${n}</button>`).join('')}</div>`);
+    $('funSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { Settings.fun[b.dataset.k] = !Settings.fun[b.dataset.k]; b.classList.toggle('on', Settings.fun[b.dataset.k]); saveSettings(); Sound.ui('click'); }));
+  }
+  document.body.insertAdjacentHTML('beforeend', '<div id="slowFx"></div>');
+}
+addEventListener('keydown', (e) => { if (Fun.traderOpen && e.code === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); Fun.closeTrader(); } }, true);
+
+// =====================================================================
 // BOOT & MAIN LOOP
 // =====================================================================
 let lastT = performance.now(), fpsAcc = 0, fpsN = 0;
@@ -7563,7 +8013,7 @@ function render() {
   if (Game.state === 'playing' && p && ((p.alive && !p.scoped) || (Killcam.active && Killcam.vmWeapon)) && VM.cur && VM.cur.group.visible) { renderer.clearDepth(); renderer.render(vmScene, vmCamera); }
 }
 // handle for automated checks and tinkering from the console
-window.__su = (a) => surfaceUnder(a); window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); Env.update(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Profile, Skins, Killcam, Secret, Rockets, Env, BR, Destr, Climb, Proj, Touch, Post, MAP: () => MAP, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, Sound, Cases: () => Cases, Profile, get camera() { return camera; }, get renderer() { return renderer; } };
+window.__su = (a) => surfaceUnder(a); window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); Env.update(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Profile, Skins, Killcam, Secret, Rockets, Env, BR, Destr, Climb, Proj, Touch, Post, MAP: () => MAP, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, Sound, Cases: () => Cases, Fun: () => Fun, Profile, PHYS, get camera() { return camera; }, get renderer() { return renderer; } };
 boot();
 </script>
 </body>
