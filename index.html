@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>As a Strike</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -288,6 +292,10 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
 .cs-item.none{opacity:.38;filter:grayscale(.7)}
 .cs-item em{position:absolute;left:4px;top:4px;font-style:normal;font-size:10px;font-weight:800;background:rgba(0,0,0,.6);padding:1px 5px}
 .cs-sec{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px;font-weight:700}
+.cs-code{display:flex;gap:8px;margin:6px 0 10px}
+.cs-code input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--line);color:inherit;padding:9px 12px;font:700 15px var(--f-ui);letter-spacing:.08em;text-transform:lowercase}
+.cs-code button{all:unset;cursor:pointer;padding:9px 16px;background:var(--signal);color:#111;font-weight:800}
+.cs-msg{font-weight:700;min-height:20px}
 .cs-empty{color:var(--muted);font-size:13px;padding:20px 0}
 #caseOpen{position:fixed;inset:0;z-index:60;background:rgba(5,6,8,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
 #caseOpen.hidden{display:none}
@@ -362,6 +370,9 @@ body.touch #lockhint{display:none!important}
 #killcam b{position:absolute;left:50%;top:84px;transform:translateX(-50%);background:var(--bad);color:#fff;padding:4px 14px;font-family:var(--f-display);font-weight:400;letter-spacing:.2em}
 #killcam span{position:absolute;left:50%;top:118px;transform:translateX(-50%);font-weight:700;text-shadow:0 1px 3px #000;white-space:nowrap}
 </style>
+</head>
+<body>
+
 
 <canvas id="gl" tabindex="-1"></canvas>
 
@@ -429,7 +440,7 @@ body.touch #lockhint{display:none!important}
   <section class="panel hidden wide" id="pnlCases" aria-label="Кейсы и инвентарь">
     <div class="cs-head"><h2 id="csTitle">Кейсы</h2><div class="cs-bal" id="csBal">◆ 0</div></div>
     <p class="sub">◆ даются за убийства и матчи. Открывай кейсы, надевай скины и ножи.</p>
-    <div class="cs-tabs" id="csTabs"><button data-t="cases" class="on">Кейсы</button><button data-t="inv">Инвентарь</button><button data-t="knives">Ножи</button><button data-t="all">Все скины</button></div>
+    <div class="cs-tabs" id="csTabs"><button data-t="cases" class="on">Кейсы</button><button data-t="inv">Инвентарь</button><button data-t="knives">Ножи</button><button data-t="all">Все скины</button><button data-t="codes">Коды</button></div>
     <div id="csBody"></div>
   </section>
   <section class="panel hidden" id="pnlSkins" aria-label="Скины">
@@ -7306,6 +7317,7 @@ const CASES = {
   neon: { name: 'Неоновый кейс', price: 250, col: ['#3a1670', '#16d6ff'], w: [38, 34, 19, 7, 2] },
   blade: { name: 'Ножевой кейс', price: 600, col: ['#5a3a10', '#e4ae39'], w: [0, 30, 30, 20, 20] },
 };
+const CODES = { nytri: 1000, prog: 1000, awdrgy: 1000 };
 const Cases = {
   tab: 'cases', sel: null, busy: false,
   equipped(wid) { const id = Profile.data.equip[wid]; return id ? Profile.data.inv.find((i) => i.id === id) : null; },
@@ -7352,6 +7364,21 @@ const Cases = {
       ov.classList.add('hidden'); this.busy = false; this.render();
     }));
   },
+  renderCodes(body) { // secret codes: each one pays out once
+    const D = Profile.data; D.codes = D.codes || [];
+    body.insertAdjacentHTML('beforeend', `<p class="sub">Знаешь секретный код? Введи его — получишь ◆. Каждый код срабатывает один раз.</p>
+      <div class="cs-code"><input id="csCode" maxlength="20" placeholder="введи код" autocomplete="off" spellcheck="false"><button id="csCodeGo">Активировать</button></div><div class="cs-msg" id="csMsg"></div>
+      <p class="sub" style="margin-top:14px">Активировано кодов: <b style="color:var(--signal2)">${D.codes.length} из ${Object.keys(CODES).length}</b></p>`);
+    const go = () => {
+      const v = $('csCode').value.trim().toLowerCase(), m = $('csMsg'), reward = CODES[v];
+      if (!v) return;
+      if (!reward) { m.style.color = '#eb4b4b'; m.textContent = 'Такого кода нет.'; Sound.ui('deny'); return; }
+      if (D.codes.includes(v)) { m.style.color = '#e4ae39'; m.textContent = 'Этот код уже активирован.'; Sound.ui('deny'); return; }
+      D.codes.push(v); D.coins += reward; Profile.save(); Sound.ui('buy'); this.render();
+      const m2 = $('csMsg'); m2.style.color = '#7fd8ff'; m2.textContent = `Код принят: +${reward} ◆`;
+    };
+    $('csCodeGo').addEventListener('click', go); $('csCode').addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') go(); });
+  },
   renderAll(body) { // every finish in the game, and how many of each you own
     const D = Profile.data, own = {}; for (const it of D.inv) own[it.s] = (own[it.s] || 0) + 1;
     const keys = Object.keys(SKINS).filter((k) => SKINS[k].r !== undefined).sort((a, b) => SKINS[a].r - SKINS[b].r);
@@ -7380,7 +7407,7 @@ const Cases = {
   render() {
     const body = $('csBody'); if (!body) return; const D = Profile.data;
     $('csBal').textContent = '◆ ' + D.coins;
-    $('csTitle').textContent = { cases: 'Кейсы', inv: 'Инвентарь', knives: 'Ножи', all: 'Все скины' }[this.tab] || 'Кейсы';
+    $('csTitle').textContent = { cases: 'Кейсы', inv: 'Инвентарь', knives: 'Ножи', all: 'Все скины', codes: 'Секретные коды' }[this.tab] || 'Кейсы';
     if (!this.tabsBound) { this.tabsBound = true; $('csTabs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { this.tab = b.dataset.t; this.sel = null; Sound.ui('click'); this.render(); })); }
     $('csTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.t === this.tab));
     body.innerHTML = '';
@@ -7397,6 +7424,7 @@ const Cases = {
       return;
     }
     if (this.tab === 'all') { this.renderAll(body); return; }
+    if (this.tab === 'codes') { this.renderCodes(body); return; }
     const items = D.inv.filter((it) => (this.tab === 'knives') === (WEAPONS[it.w] && WEAPONS[it.w].kind === 'knife'));
     if (this.tab === 'knives') {
       const cur = D.knife ? KNIVES[D.knife] : 'Обычный нож';
@@ -7526,5 +7554,5 @@ function render() {
 window.__su = (a) => surfaceUnder(a); window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); Env.update(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Profile, Skins, Killcam, Secret, Rockets, Env, BR, Destr, Climb, Proj, Touch, Post, MAP: () => MAP, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, Sound, Cases: () => Cases, Profile, get camera() { return camera; }, get renderer() { return renderer; } };
 boot();
 </script>
-
-</body></html>
+</body>
+</html>
