@@ -1,8 +1,4 @@
-<!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>As a Strike</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -267,6 +263,47 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
 .profile .xpbar{height:5px;background:rgba(255,255,255,.12);margin:5px 0 3px}
 .profile .xpbar i{display:block;height:100%;background:var(--signal)}
 .profile small{color:var(--muted);font-size:12px}
+.panel.wide{width:min(760px,calc(100% - 32px))}
+.cs-head{display:flex;justify-content:space-between;align-items:baseline}
+.cs-bal{font:800 20px var(--f-ui);color:#7fd8ff}
+.cs-tabs{display:flex;gap:6px;margin-bottom:14px}
+.cs-tabs button,.cs-act button{all:unset;cursor:pointer;padding:7px 14px;border:1px solid var(--line);font-weight:700;font-size:13px}
+.cs-tabs button.on{border-color:var(--signal);color:var(--signal2);background:rgba(255,125,36,.1)}
+.cs-cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.cs-case{border:1px solid var(--line);padding:12px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;gap:8px}
+.cs-case .box{height:92px;border-radius:6px;position:relative;overflow:hidden;transition:transform .25s}
+.cs-case:hover .box{transform:translateY(-3px) rotate(-1deg)}
+.cs-case .box:after{content:"";position:absolute;inset:38% 0 auto;height:10px;background:rgba(0,0,0,.35)}
+.cs-case b{font-size:15px}.cs-case small{color:var(--muted);font-size:12px}
+.cs-case button{all:unset;cursor:pointer;text-align:center;padding:8px;background:var(--signal);color:#111;font-weight:800}
+.cs-case button.no{opacity:.4;cursor:not-allowed}
+.cs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.cs-item{all:unset;cursor:pointer;display:block;background:rgba(255,255,255,.04);border:1px solid var(--line);border-bottom:3px solid var(--rc);padding:6px;font-size:12px;position:relative}
+.cs-item canvas{width:100%;height:auto;display:block}
+.cs-item b{display:block;font-size:12px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-item small{color:var(--rc);font-size:10px}
+.cs-item.eq:before{content:"НАДЕТО";position:absolute;right:4px;top:4px;font-size:9px;font-weight:800;background:var(--signal);color:#111;padding:1px 4px}
+.cs-item.sel{outline:2px solid var(--signal2)}
+.cs-act{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.cs-empty{color:var(--muted);font-size:13px;padding:20px 0}
+#caseOpen{position:fixed;inset:0;z-index:60;background:rgba(5,6,8,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+#caseOpen.hidden{display:none}
+#caseOpen h3{font:400 28px var(--f-display);margin:0;letter-spacing:.04em}
+.co-win{position:relative;width:min(900px,96vw);height:150px;overflow:hidden;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.03)}
+.co-win:before,.co-win:after{content:"";position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
+.co-win:before{left:0;background:linear-gradient(90deg,#050608,transparent)}.co-win:after{right:0;background:linear-gradient(-90deg,#050608,transparent)}
+.co-line{position:absolute;left:50%;top:-4px;bottom:-4px;width:3px;margin-left:-1px;background:#ffcc33;box-shadow:0 0 12px #ffcc33;z-index:3}
+.co-strip{position:absolute;left:0;top:10px;display:flex;gap:8px;will-change:transform}
+.co-card{flex:0 0 140px;height:128px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.2));border-bottom:4px solid var(--rc);box-sizing:border-box;padding:6px;font-size:11px}
+.co-card canvas{width:128px;height:51px;display:block;margin:10px auto 6px}
+.co-card b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.co-reveal{display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;transform:scale(.6);transition:all .5s cubic-bezier(.2,1.6,.4,1)}
+.co-reveal.show{opacity:1;transform:scale(1)}
+.co-reveal canvas{width:min(360px,80vw);height:auto;filter:drop-shadow(0 0 24px var(--rc))}
+.co-reveal b{font-size:22px}.co-reveal small{color:var(--rc);font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.co-rays{position:absolute;inset:0;pointer-events:none;background:repeating-conic-gradient(from 0deg,rgba(255,204,51,.12) 0 6deg,transparent 6deg 18deg);animation:corays 8s linear infinite;opacity:0;transition:opacity .6s}
+.co-rays.on{opacity:1}
+@keyframes corays{to{transform:rotate(360deg)}}
 .skin-row{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .skin-row b{font-size:14px}
 .skin-opts{display:flex;flex-wrap:wrap;gap:6px}
@@ -322,9 +359,6 @@ body.touch #lockhint{display:none!important}
 #killcam b{position:absolute;left:50%;top:84px;transform:translateX(-50%);background:var(--bad);color:#fff;padding:4px 14px;font-family:var(--f-display);font-weight:400;letter-spacing:.2em}
 #killcam span{position:absolute;left:50%;top:118px;transform:translateX(-50%);font-weight:700;text-shadow:0 1px 3px #000;white-space:nowrap}
 </style>
-</head>
-<body>
-
 
 <canvas id="gl" tabindex="-1"></canvas>
 
@@ -347,6 +381,7 @@ body.touch #lockhint{display:none!important}
       <div class="profile" id="profile"></div>
       <nav class="menu-nav" id="mainNav">
         <button data-pnl="pnlPlay" id="btnPlay">Играть<small>матч против ботов</small></button>
+        <button data-pnl="pnlCases">Кейсы<small>скины, ножи и инвентарь за ◆</small></button>
         <button data-pnl="pnlSkins">Скины<small>раскраски оружия, открываются по уровню</small></button>
         <button data-pnl="pnlSettings">Настройки<small>мышь, графика, прицел, звук</small></button>
         <button data-pnl="pnlControls">Управление<small>клавиши и правила</small></button>
@@ -388,6 +423,12 @@ body.touch #lockhint{display:none!important}
     <button class="go" id="btnStart">В бой</button>
   </section>
 
+  <section class="panel hidden wide" id="pnlCases" aria-label="Кейсы и инвентарь">
+    <div class="cs-head"><h2>Кейсы</h2><div class="cs-bal" id="csBal">◆ 0</div></div>
+    <p class="sub">◆ даются за убийства и матчи. Открывай кейсы, надевай скины и ножи.</p>
+    <div class="cs-tabs" id="csTabs"><button data-t="cases" class="on">Кейсы</button><button data-t="inv">Инвентарь</button><button data-t="knives">Ножи</button></div>
+    <div id="csBody"></div>
+  </section>
   <section class="panel hidden" id="pnlSkins" aria-label="Скины">
     <h2>Скины</h2>
     <p class="sub" id="skinsSub">Новые раскраски открываются с ростом уровня.</p>
@@ -5557,9 +5598,9 @@ const UI = {
     document.querySelectorAll('#mainNav button').forEach((b) => b.addEventListener('click', () => {
       Sound.init(); Sound.startMenuMusic(); Sound.ui('click');
       const id = b.dataset.pnl, open = !$(id).classList.contains('hidden');
-      for (const pnl of ['pnlPlay', 'pnlSkins', 'pnlSettings', 'pnlControls']) $(pnl).classList.add('hidden');
+      for (const pnl of ['pnlPlay', 'pnlCases', 'pnlSkins', 'pnlSettings', 'pnlControls']) $(pnl).classList.add('hidden');
       document.querySelectorAll('#mainNav button').forEach((x) => x.classList.remove('on'));
-      if (!open) { $(id).classList.remove('hidden'); b.classList.add('on'); if (id === 'pnlSettings') $('pnlSettings').appendChild($('setList')); if (id === 'pnlSkins') Skins.renderList(); }
+      if (!open) { $(id).classList.remove('hidden'); b.classList.add('on'); if (id === 'pnlSettings') $('pnlSettings').appendChild($('setList')); if (id === 'pnlSkins') Skins.renderList(); if (id === 'pnlCases') Cases.render(); }
     }));
     const pick = (sel, attr, cb) => document.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => { document.querySelectorAll(sel).forEach((x) => x.classList.remove('on')); b.classList.add('on'); Sound.ui('click'); cb && cb(b.dataset[attr]); }));
     pick('#sidePick .side', 'side'); pick('#segTod button', 'v'); pick('#segWeather button', 'v'); pick('#segSize button', 'v'); pick('#segLen button', 'v'); pick('#segDiff button', 'v'); pick('#mapPick .mapc', 'map');
@@ -5608,7 +5649,7 @@ const UI = {
     $('endMvp').innerHTML = `Ваш счёт: ${p.stats.k} убийств, ${p.stats.d} смертей, ${p.stats.hs} в голову, урон ${p.stats.dmg}.<br>Лучший игрок матча: ${best.name} (${best.stats.k} убийств).`;
     if (Game.cfg.mode === 'train') { const T = Game.train; $('endRes').textContent = 'Тренировка'; $('endRes').className = 'res'; $('endScore').textContent = ''; $('endMvp').innerHTML = `Выстрелов ${T.shots}, попаданий ${T.hits}, в голову ${T.heads}, мишеней ${T.kills}.`; }
     if (isBR()) { $('endRes').textContent = win ? 'Победа!' : `#${BR.place} место`; $('endRes').className = 'res ' + (win ? 'win' : 'lose'); $('endScore').textContent = `${win ? 1 : BR.place} / ${BR.total}`; $('endMvp').innerHTML = `Убийств: ${p.stats.k}, урон ${p.stats.dmg}. ${win ? 'Вы последний выживший!' : ''}`; }
-    const gained = Profile.matchEnd(win); $('endMvp').innerHTML += `<br><b style="color:var(--signal2)">+${gained} опыта</b> · ${Profile.rankName()} · уровень ${Profile.data.level}`;
+    const gained = Profile.matchEnd(win); $('endMvp').innerHTML += `<br><b style="color:var(--signal2)">+${gained} опыта · +${Profile.lastCoins || 0} ◆</b> · ${Profile.rankName()} · уровень ${Profile.data.level}`;
     $('endm').classList.remove('hidden'); Voice.say(win ? 'Победа!' : 'Поражение');
   },
   // ---------------------------------------------------------- buy menu
@@ -5790,7 +5831,7 @@ const Skins = {
     $('skinsSub').textContent = `Уровень ${Profile.data.level} (${Profile.rankName()}). Новые раскраски открываются с ростом уровня${Profile.data.secret ? '' : ' — а одна спрятана на карте de_dune'}.`;
     host.innerHTML = ids.map((id) => {
       const cur = Profile.data.skins[id] || 'none';
-      const opts = Object.entries(SKINS).map(([k, s]) => { const ok = this.unlocked(k); return `<button data-w="${id}" data-s="${k}" class="${cur === k ? 'on' : ''} ${ok ? '' : 'lock'}" title="${ok ? s.name : (s.secret ? 'секрет' : 'уровень ' + s.lvl)}"><i style="background:${s.sw}"></i>${ok ? s.name : (s.secret ? '???' : 'ур. ' + s.lvl)}</button>`; }).join('');
+      const opts = Object.entries(SKINS).filter(([, s]) => !s.caseOnly).map(([k, s]) => { const ok = this.unlocked(k); return `<button data-w="${id}" data-s="${k}" class="${cur === k ? 'on' : ''} ${ok ? '' : 'lock'}" title="${ok ? s.name : (s.secret ? 'секрет' : 'уровень ' + s.lvl)}"><i style="background:${s.sw}"></i>${ok ? s.name : (s.secret ? '???' : 'ур. ' + s.lvl)}</button>`; }).join('');
       return `<div class="skin-row"><b>${WEAPONS[id].name}</b><div class="skin-opts">${opts}</div></div>`;
     }).join('');
     host.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { if (b.classList.contains('lock')) { Sound.ui('deny'); return; } Sound.ui('click'); this.set(b.dataset.w, b.dataset.s); }));
@@ -7123,6 +7164,279 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) setT
 }
 
 // =====================================================================
+// CASES — ◆ currency from matches, cases with a roulette, an inventory
+// of weapon skins, collectible knives (with their own animations)
+// =====================================================================
+
+// ------------------------------------------------------------ new finishes (case-only)
+const RARITY = [
+  { name: 'Армейское', c: '#4b69ff', sell: 8 }, { name: 'Запрещённое', c: '#8847ff', sell: 25 },
+  { name: 'Засекреченное', c: '#d32ce6', sell: 70 }, { name: 'Тайное', c: '#eb4b4b', sell: 180 }, { name: '★ Редкий нож', c: '#e4ae39', sell: 450 },
+];
+const stripes = (cols, w, ang) => (x, S) => { x.save(); x.translate(S / 2, S / 2); x.rotate(ang); for (let k = -S; k < S; k += w) { x.fillStyle = cols[((k / w) % cols.length + cols.length) % cols.length | 0]; x.fillRect(k, -S, w, S * 2); } x.restore(); };
+Object.assign(SKINS, {
+  urban: { name: 'Городской', caseOnly: true, r: 0, sw: '#7d8186', draw: camoDraw(['#8a8e93', '#5d6166', '#b4b8bc', '#3c3f43']) },
+  jungle: { name: 'Джунгли', caseOnly: true, r: 0, sw: '#3f6b35', draw: (x, S, R) => { x.fillStyle = '#4d6b33'; x.fillRect(0, 0, S, S); const c = ['#2d4420', '#6e8b45', '#1b2914']; for (let k = 0; k < 500; k++) { x.fillStyle = c[k % 3]; x.fillRect((R() * S / 8 | 0) * 8, (R() * S / 8 | 0) * 8, 8 * (1 + (R() * 3 | 0)), 8); } } },
+  rust: { name: 'Ржавчина', caseOnly: true, r: 0, sw: '#9a4a22', draw: (x, S, R) => { x.fillStyle = '#5b3a2a'; x.fillRect(0, 0, S, S); for (let k = 0; k < 300; k++) { x.fillStyle = `rgba(${150 + R() * 70 | 0},${60 + R() * 40 | 0},20,${0.2 + R() * 0.4})`; x.beginPath(); x.arc(R() * S, R() * S, 2 + R() * 14, 0, TAU); x.fill(); } } },
+  navy: { name: 'Флот', caseOnly: true, r: 0, sw: '#2c4a72', draw: camoDraw(['#2f4c73', '#1b2f4d', '#4d6f99', '#11203a']) },
+  digital: { name: 'Цифра', caseOnly: true, r: 1, sw: '#3a7bd5', draw: (x, S, R) => { const c = ['#1e3d6b', '#3a7bd5', '#8fb8ef', '#0f1f38']; for (let i = 0; i < S; i += 8) for (let j = 0; j < S; j += 8) { x.fillStyle = c[R() * 4 | 0]; x.fillRect(i, j, 8, 8); } } },
+  zebra: { name: 'Зебра', caseOnly: true, r: 1, sw: '#e8e8e8', draw: (x, S) => { x.fillStyle = '#efefef'; x.fillRect(0, 0, S, S); x.fillStyle = '#111'; for (let k = 0; k < 18; k++) { x.beginPath(); const y0 = k * S / 18; x.moveTo(0, y0); for (let s = 0; s <= 20; s++) x.lineTo(s * S / 20, y0 + Math.sin(s * 0.7 + k * 1.3) * 7); for (let s = 20; s >= 0; s--) x.lineTo(s * S / 20, y0 + 5 + Math.sin(s * 0.7 + k * 1.3) * 7 + Math.cos(s + k) * 2); x.fill(); } } },
+  toxic: { name: 'Токсин', caseOnly: true, r: 1, sw: '#7dff3a', emissive: true, draw: (x, S, R) => { x.fillStyle = '#141a10'; x.fillRect(0, 0, S, S); for (let k = 0; k < 22; k++) { const cx = R() * S, len = 30 + R() * 90; const g = x.createLinearGradient(cx, 0, cx, len); g.addColorStop(0, '#9dff3a'); g.addColorStop(1, 'rgba(60,180,20,0)'); x.fillStyle = g; x.fillRect(cx - 3, 0, 6 + R() * 6, len); x.beginPath(); x.arc(cx + 3, len, 5, 0, TAU); x.fill(); } } },
+  sakura: { name: 'Сакура', caseOnly: true, r: 1, sw: '#ff9ec7', draw: (x, S, R) => { x.fillStyle = '#2a1a22'; x.fillRect(0, 0, S, S); for (let k = 0; k < 60; k++) { const cx = R() * S, cy = R() * S, r = 4 + R() * 7; x.fillStyle = R() < 0.5 ? '#ff9ec7' : '#ffd1e3'; for (let p = 0; p < 5; p++) { x.beginPath(); x.ellipse(cx + Math.cos(p * 1.256) * r, cy + Math.sin(p * 1.256) * r, r * 0.7, r * 0.45, p * 1.256, 0, TAU); x.fill(); } } } },
+  dragon: { name: 'Дракон', caseOnly: true, r: 2, sw: '#c01c1c', rough: 0.35, metal: 0.3, draw: (x, S) => { x.fillStyle = '#5a0b0b'; x.fillRect(0, 0, S, S); for (let j = 0; j < S + 16; j += 12) for (let i = 0; i < S + 16; i += 16) { const ox = (j / 12 % 2) * 8; const g = x.createRadialGradient(i + ox, j, 1, i + ox, j, 10); g.addColorStop(0, '#ffcc4d'); g.addColorStop(0.5, '#d4231c'); g.addColorStop(1, '#3b0606'); x.fillStyle = g; x.beginPath(); x.arc(i + ox, j, 9, 0, Math.PI); x.fill(); } } },
+  ice: { name: 'Лёд', caseOnly: true, r: 2, sw: '#9fe3ff', rough: 0.15, metal: 0.2, draw: (x, S, R) => { const g = x.createLinearGradient(0, 0, S, S); g.addColorStop(0, '#dff6ff'); g.addColorStop(1, '#4aa6d6'); x.fillStyle = g; x.fillRect(0, 0, S, S); x.strokeStyle = 'rgba(255,255,255,0.7)'; for (let k = 0; k < 40; k++) { x.lineWidth = 0.5 + R() * 1.5; x.beginPath(); let px = R() * S, py = R() * S; x.moveTo(px, py); for (let s = 0; s < 4; s++) { px += (R() - 0.5) * 60; py += (R() - 0.5) * 60; x.lineTo(px, py); } x.stroke(); } } },
+  hyper: { name: 'Гиперлуч', caseOnly: true, r: 2, sw: '#ff3ea5', emissive: true, draw: stripes(['#ff3ea5', '#1a1030', '#38e0ff', '#1a1030'], 14, 0.6) },
+  galaxy: { name: 'Галактика', caseOnly: true, r: 2, sw: '#3b1f8a', emissive: true, draw: (x, S, R) => { const g = x.createRadialGradient(S * 0.4, S * 0.5, 4, S / 2, S / 2, S * 0.75); g.addColorStop(0, '#d35bff'); g.addColorStop(0.4, '#3b1f8a'); g.addColorStop(1, '#05030f'); x.fillStyle = g; x.fillRect(0, 0, S, S); for (let k = 0; k < 220; k++) { x.fillStyle = `rgba(255,255,255,${R()})`; x.fillRect(R() * S, R() * S, R() < 0.1 ? 2 : 1, R() < 0.1 ? 2 : 1); } } },
+  fade: { name: 'Градиент', caseOnly: true, r: 3, sw: '#ff7ad9', rough: 0.2, metal: 0.65, draw: (x, S) => { const g = x.createLinearGradient(0, S, S, 0); g.addColorStop(0, '#ffd23f'); g.addColorStop(0.45, '#ff5fb4'); g.addColorStop(1, '#6b3cff'); x.fillStyle = g; x.fillRect(0, 0, S, S); } },
+  inferno: { name: 'Пекло', caseOnly: true, r: 3, sw: '#ff6a00', emissive: true, draw: (x, S, R) => { x.fillStyle = '#120400'; x.fillRect(0, 0, S, S); for (let k = 0; k < 40; k++) { const cx = R() * S, h = 40 + R() * 90; const g = x.createLinearGradient(cx, S, cx, S - h); g.addColorStop(0, '#ffee66'); g.addColorStop(0.4, '#ff6a00'); g.addColorStop(1, 'rgba(160,20,0,0)'); x.fillStyle = g; x.beginPath(); x.moveTo(cx - 14, S); x.quadraticCurveTo(cx + (R() - 0.5) * 30, S - h * 0.6, cx, S - h); x.quadraticCurveTo(cx + 10, S - h * 0.5, cx + 14, S); x.fill(); } } },
+  marble: { name: 'Мрамор', caseOnly: true, r: 3, sw: '#e9e4dc', rough: 0.15, metal: 0.1, draw: (x, S, R) => { x.fillStyle = '#ece7df'; x.fillRect(0, 0, S, S); for (let k = 0; k < 26; k++) { x.strokeStyle = `rgba(${40 + R() * 60 | 0},${40 + R() * 40 | 0},${60 + R() * 40 | 0},${0.2 + R() * 0.5})`; x.lineWidth = 0.5 + R() * 2.5; x.beginPath(); let px = R() * S, py = 0; x.moveTo(px, py); while (py < S) { px += (R() - 0.5) * 30; py += 10 + R() * 20; x.lineTo(px, py); } x.stroke(); } } },
+  damascus: { name: 'Дамасская сталь', caseOnly: true, r: 4, sw: '#8d939a', rough: 0.25, metal: 0.85, draw: (x, S) => { for (let j = 0; j < S; j++) for (let i = 0; i < S; i += 2) { const v = Math.sin(i * 0.09 + Math.sin(j * 0.05) * 4 + Math.sin(i * 0.02 + j * 0.03) * 3); const c = 110 + v * 70 | 0; x.fillStyle = `rgb(${c},${c + 4},${c + 10})`; x.fillRect(i, j, 2, 1); } } },
+  doppler: { name: 'Допплер', caseOnly: true, r: 4, sw: '#1c8cff', rough: 0.15, metal: 0.8, emissive: true, draw: (x, S, R) => { const g = x.createLinearGradient(0, 0, S, S); g.addColorStop(0, '#0b1b5c'); g.addColorStop(0.5, '#1c8cff'); g.addColorStop(1, '#ff2fb0'); x.fillStyle = g; x.fillRect(0, 0, S, S); for (let k = 0; k < 120; k++) { x.fillStyle = `rgba(255,255,255,${R() * 0.25})`; x.beginPath(); x.arc(R() * S, R() * S, 1 + R() * 6, 0, TAU); x.fill(); } } },
+});
+for (const k of ['desert', 'forest', 'arctic', 'tiger', 'carbon', 'redline', 'neon']) SKINS[k].r = { desert: 0, forest: 0, arctic: 1, tiger: 2, carbon: 1, redline: 2, neon: 3 }[k];
+const SKIN_BY_R = [0, 1, 2, 3, 4].map((r) => Object.keys(SKINS).filter((k) => SKINS[k].r === r && r < 4));
+const KNIFE_FINISH = ['fade', 'damascus', 'doppler', 'marble', 'tiger', 'dragon', 'galaxy', 'inferno', 'ice', 'neon'];
+
+// ------------------------------------------------------------ knives
+Object.assign(MODEL_BUILDERS, {
+  karambit(g, P) {
+    part(g, geoBoxR(0.024, 0.026, 0.09), MAT.polymer, 0, 0, 0.04);
+    const ring = part(g, new THREE.TorusGeometry(0.022, 0.006, 8, 18), MAT.steel, 0, -0.005, 0.1); ring.rotation.y = Math.PI / 2;
+    const s = new THREE.Shape(); s.moveTo(0, 0); for (let a = 0; a <= 1; a += 0.1) s.lineTo(Math.sin(a * 1.3) * 0.12, -Math.pow(a, 1.6) * 0.07); for (let a = 1; a >= 0; a -= 0.1) s.lineTo(Math.sin(a * 1.3) * 0.12 * 0.86, -Math.pow(a, 1.6) * 0.07 + 0.016); s.lineTo(0, 0.016);
+    const bg = new THREE.ExtrudeGeometry(s, { depth: 0.003, bevelEnabled: true, bevelThickness: 0.0015, bevelSize: 0.0015, bevelSegments: 1 }); bg.rotateY(Math.PI / 2);
+    P.blade = part(g, bg, MAT.steel, 0, 0.0, -0.005);
+  },
+  butterfly(g, P) {
+    const s = new THREE.Shape(); s.moveTo(0, -0.012); s.lineTo(0.13, -0.012); s.lineTo(0.16, 0.004); s.lineTo(0.12, 0.012); s.lineTo(0, 0.012);
+    const bg = new THREE.ExtrudeGeometry(s, { depth: 0.003, bevelEnabled: true, bevelThickness: 0.0015, bevelSize: 0.0015, bevelSegments: 1 }); bg.rotateY(Math.PI / 2);
+    P.bg = new THREE.Group(); P.bg.position.set(0, 0, -0.015); g.add(P.bg); P.blade = part(P.bg, bg, MAT.steel, 0, 0.0, -0.005);
+    P.h1 = new THREE.Group(); P.h1.position.set(0, 0, -0.015); g.add(P.h1); part(P.h1, geoBoxR(0.012, 0.024, 0.13), MAT.polymer, 0.008, 0, 0.065);
+    P.h2 = new THREE.Group(); P.h2.position.set(0, 0, -0.015); g.add(P.h2); part(P.h2, geoBoxR(0.012, 0.024, 0.13), MAT.gunmetal, -0.008, 0, 0.065);
+    part(P.h1, geoBoxR(0.026, 0.008, 0.012), MAT.steel, -0.004, -0.012, 0.13);
+  },
+  bayonet(g, P) {
+    part(g, geoCylZ(0.016, 0.014, 0.11, 10), MAT.polymer, 0, 0, 0.04);
+    for (let k = 0; k < 5; k++) part(g, geoCylZ(0.0165, 0.0165, 0.006, 10), MAT.gunmetalDark, 0, 0, 0.0 + k * 0.02);
+    part(g, geoBoxR(0.05, 0.012, 0.012), MAT.steel, 0, 0.0, -0.02);
+    const s = new THREE.Shape(); s.moveTo(0, -0.014); s.lineTo(0.17, -0.014); s.quadraticCurveTo(0.21, -0.01, 0.23, 0.012); s.lineTo(0.15, 0.018); s.lineTo(0, 0.018);
+    const bg = new THREE.ExtrudeGeometry(s, { depth: 0.0035, bevelEnabled: true, bevelThickness: 0.0016, bevelSize: 0.0016, bevelSegments: 1 }); bg.rotateY(Math.PI / 2);
+    P.blade = part(g, bg, MAT.steel, 0, 0.0, -0.026);
+  },
+  bowie(g, P) {
+    part(g, geoBoxR(0.028, 0.034, 0.12), MAT.walnut, 0, 0, 0.045); part(g, geoBoxR(0.07, 0.016, 0.014), MAT.steel, 0, 0.0, -0.02);
+    const s = new THREE.Shape(); s.moveTo(0, -0.02); s.lineTo(0.2, -0.02); s.quadraticCurveTo(0.25, -0.012, 0.26, 0.02); s.quadraticCurveTo(0.22, 0.0, 0.18, 0.024); s.lineTo(0, 0.024);
+    const bg = new THREE.ExtrudeGeometry(s, { depth: 0.004, bevelEnabled: true, bevelThickness: 0.0018, bevelSize: 0.0018, bevelSegments: 1 }); bg.rotateY(Math.PI / 2);
+    P.blade = part(g, bg, MAT.steel, 0, 0.0, -0.027);
+  },
+});
+const KNIVES = { karambit: 'Керамбит', butterfly: 'Бабочка', bayonet: 'Штык-нож М9', bowie: 'Боуи' };
+for (const [k, n] of Object.entries(KNIVES)) {
+  WEAPONS['k_' + k] = Object.assign({}, WEAPONS.knife, { id: 'k_' + k, name: n, model: k, knifeType: k, vmPos: [0.14, -0.15, -0.3] });
+  HANDS[k] = HANDS.knife;
+}
+WEAPONS.knife.vmPos = WEAPONS.knife.vmPos || [0.14, -0.15, -0.3];
+// knife finishes cover the blade too, not just the handle
+{
+  const bwm = buildWeaponModel;
+  buildWeaponModel = function (id, skin) {
+    const d = WEAPONS[id], knife = d && d.kind === 'knife' && (skin || d.skin); if (knife) SKIN_BODY.add('steel');
+    try { return bwm(id, skin); } finally { if (knife) SKIN_BODY.delete('steel'); }
+  };
+}
+
+// ------------------------------------------------------------ profile: coins, inventory, equipped items
+{
+  const D = Profile.data;
+  if (D.coins === undefined) D.coins = 400; // a welcome gift: enough for a few cases right away
+  D.inv = D.inv || []; D.equip = D.equip || {}; D.knife = D.knife || null; D.nextId = D.nextId || 1;
+  const ok = Profile.onKill.bind(Profile), me = Profile.matchEnd.bind(Profile);
+  Profile.coin = function (n, why) { this.data.coins = Math.max(0, (this.data.coins || 0) + Math.round(n)); this.matchCoins = (this.matchCoins || 0) + Math.max(0, n); this.save(); };
+  Profile.onKill = function (head) {
+    ok(head); if (Game.cfg.mode !== 'train') this.coin(head ? 5 : 3);
+    const w = Game.player && Game.player.weapon, it = w && Cases.equipped(w.id); if (it && it.st !== undefined) { it.st++; this.save(); }
+  };
+  Profile.matchEnd = function (win) { const xp = me(win); if (Game.cfg.mode !== 'train') this.coin(win ? 60 : 25); this.lastCoins = this.matchCoins || 0; this.matchCoins = 0; return xp; };
+  const ms = Profile.matchStart.bind(Profile); Profile.matchStart = function () { ms(); this.matchCoins = 0; };
+}
+const _skinsOf = Skins.of.bind(Skins);
+Skins.of = function (id) { const it = Cases.equipped(id); return it ? it.s : _skinsOf(id); };
+{ // the player carries the knife they equipped
+  const rl = Actor.prototype.resetLoadout;
+  Actor.prototype.resetLoadout = function (full) { rl.call(this, full); if (this === Game.player && Profile.data.knife && WEAPONS['k_' + Profile.data.knife] && (!this.slots[3] || this.slots[3].id !== 'k_' + Profile.data.knife)) this.slots[3] = makeWeapon('k_' + Profile.data.knife); };
+}
+
+// ------------------------------------------------------------ item pictures: a gun silhouette filled with the finish
+const SIL = {
+  pistol: [[10, 14], [70, 14], [72, 10], [78, 10], [78, 22], [44, 22], [40, 24], [36, 44], [22, 44], [26, 24], [10, 22]],
+  rifle: [[2, 18], [22, 14], [40, 14], [42, 10], [86, 10], [88, 14], [118, 14], [118, 18], [90, 19], [72, 20], [68, 38], [58, 38], [60, 22], [44, 22], [40, 30], [32, 30], [34, 22], [22, 24], [2, 30]],
+  sniper: [[0, 18], [24, 14], [44, 14], [44, 8], [78, 8], [78, 14], [120, 15], [120, 18], [80, 19], [60, 20], [56, 32], [48, 32], [48, 22], [24, 24], [0, 30]],
+  smg: [[14, 16], [30, 14], [90, 14], [92, 18], [104, 18], [104, 21], [80, 22], [64, 22], [60, 40], [50, 40], [52, 22], [40, 22], [36, 32], [28, 32], [30, 22], [14, 26]],
+  shotgun: [[0, 18], [24, 14], [118, 14], [118, 19], [86, 19], [86, 23], [56, 23], [52, 22], [30, 24], [0, 30]],
+  knife: [[6, 22], [40, 20], [46, 17], [50, 20], [104, 18], [118, 21], [104, 27], [50, 27], [46, 30], [40, 27], [6, 27]],
+};
+const _patCache = {};
+function skinPattern(key) {
+  if (_patCache[key]) return _patCache[key];
+  const c = makeCanvas(128, 128), x = c.getContext('2d'), s = SKINS[key];
+  if (key === 'gold') { const g = x.createLinearGradient(0, 0, 128, 128); g.addColorStop(0, '#fff1a8'); g.addColorStop(0.5, '#d9a531'); g.addColorStop(1, '#8a5d10'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); }
+  else if (!s || !s.draw) { x.fillStyle = '#3a3d40'; x.fillRect(0, 0, 128, 128); }
+  else { const big = makeCanvas(256, 256); s.draw(big.getContext('2d'), 256, mulberry32(256 * 7 + s.draw.length)); x.drawImage(big, 0, 0, 128, 128); }
+  return (_patCache[key] = c);
+}
+function itemCanvas(wid, skin, w = 160, h = 64) {
+  const d = WEAPONS[wid], kind = d.kind === 'knife' ? 'knife' : d.kind === 'pistol' ? 'pistol' : d.kind === 'sniper' ? 'sniper' : d.kind === 'shotgun' ? 'shotgun' : d.kind === 'smg' ? 'smg' : 'rifle';
+  const c = makeCanvas(w, h), x = c.getContext('2d'), k = Math.min(w / 122, h / 48), ox = (w - 120 * k) / 2, oy = (h - 46 * k) / 2;
+  x.beginPath(); SIL[kind].forEach(([px, py], i) => (i ? x.lineTo : x.moveTo).call(x, ox + px * k, oy + py * k)); x.closePath();
+  x.save(); x.clip(); x.fillStyle = x.createPattern(skinPattern(skin), 'repeat'); x.fillRect(0, 0, w, h);
+  const sh = x.createLinearGradient(0, oy, 0, oy + 46 * k); sh.addColorStop(0, 'rgba(255,255,255,0.25)'); sh.addColorStop(0.5, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(0,0,0,0.35)'); x.fillStyle = sh; x.fillRect(0, 0, w, h); x.restore();
+  x.strokeStyle = 'rgba(0,0,0,0.6)'; x.lineWidth = 1.2; x.stroke();
+  return c;
+}
+const WEARS = [[0.07, 'Прямо с завода'], [0.15, 'Немного поношенное'], [0.38, 'После полевых'], [0.45, 'Поношенное'], [1, 'Закалённое в боях']];
+const wearName = (f) => WEARS.find(([m]) => f <= m)[1];
+
+// ------------------------------------------------------------ cases
+const CASE_GUNS = ['ak', 'm4', 'm4a1s', 'awp', 'deagle', 'usp', 'g18', 'p18', 'k45', 'galil', 'famas', 'aug', 'sg553', 'scout', 'p90', 'mp7', 'mac10', 'ump', 'vector', 'mag7', 'nova', 'r8', 'ak74', 'mosin', 'svd', 'dualies', 'beretta', 'thompson'];
+const CASES = {
+  army: { name: 'Армейский кейс', price: 100, col: ['#4d5a3a', '#7d8a50'], w: [70, 24, 5, 1, 0.5] },
+  neon: { name: 'Неоновый кейс', price: 250, col: ['#3a1670', '#16d6ff'], w: [38, 34, 19, 7, 2] },
+  blade: { name: 'Ножевой кейс', price: 600, col: ['#5a3a10', '#e4ae39'], w: [0, 30, 30, 20, 20] },
+};
+const Cases = {
+  tab: 'cases', sel: null, busy: false,
+  equipped(wid) { const id = Profile.data.equip[wid]; return id ? Profile.data.inv.find((i) => i.id === id) : null; },
+  roll(caseKey) {
+    const C = CASES[caseKey], tot = C.w.reduce((a, b) => a + b, 0); let r = Math.random() * tot, rar = 0;
+    for (; rar < 5; rar++) { r -= C.w[rar]; if (r <= 0) break; } rar = Math.min(4, rar);
+    if (rar === 4) return { w: 'k_' + choice(Object.keys(KNIVES)), s: choice(KNIFE_FINISH), r: 4, wear: Math.random() * 0.6, st: Math.random() < 0.15 ? 0 : undefined };
+    return { w: choice(CASE_GUNS.filter((g) => WEAPONS[g])), s: choice(SKIN_BY_R[rar]), r: rar, wear: Math.random(), st: Math.random() < 0.1 ? 0 : undefined };
+  },
+  title(it) { return `${it.st !== undefined ? 'StatTrak™ ' : ''}${WEAPONS[it.w].name} | ${SKINS[it.s].name}`; },
+  card(it, cls = 'co-card') {
+    const el = document.createElement('div'); el.className = cls; el.style.setProperty('--rc', RARITY[it.r].c);
+    el.appendChild(itemCanvas(it.w, it.s, 128, 51)); el.insertAdjacentHTML('beforeend', `<b>${WEAPONS[it.w].name}</b><span style="color:${RARITY[it.r].c}">${SKINS[it.s].name}</span>`); return el;
+  },
+  open(caseKey) {
+    const C = CASES[caseKey], D = Profile.data; if (this.busy) return;
+    if (D.coins < C.price) { Sound.ui('deny'); return; }
+    D.coins -= C.price; Profile.save(); this.busy = true; this.render(); Sound.init();
+    const win = this.roll(caseKey); win.id = D.nextId++; win.wear = +win.wear.toFixed(4);
+    let ov = $('caseOpen'); if (!ov) { ov = document.createElement('div'); ov.id = 'caseOpen'; document.body.appendChild(ov); }
+    ov.className = ''; ov.innerHTML = `<div class="co-rays"></div><h3>${C.name}</h3><div class="co-win"><div class="co-line"></div><div class="co-strip"></div></div><div class="co-reveal"></div><div class="cs-act" id="coAct"></div>`;
+    const strip = ov.querySelector('.co-strip'), N = 62, WIN = 54, CW = 148;
+    for (let i = 0; i < N; i++) strip.appendChild(this.card(i === WIN ? win : this.roll(caseKey)));
+    const box = ov.querySelector('.co-win'), center = box.clientWidth / 2, target = WIN * CW + 70 - center + rand(-55, 55), dur = 6200, t0 = performance.now();
+    let lastIdx = -1, skip = false; ov.onclick = () => { skip = true; };
+    const ease = (t) => 1 - Math.pow(1 - t, 4);
+    const step = (now) => {
+      const t = skip ? 1 : clamp((now - t0) / dur, 0, 1), xx = target * ease(t); strip.style.transform = `translateX(${-xx}px)`;
+      const idx = Math.floor((xx + center) / CW); if (idx !== lastIdx) { lastIdx = idx; if (!skip) Sound.ui('click'); }
+      if (t < 1) requestAnimationFrame(step); else this.reveal(win, ov);
+    };
+    requestAnimationFrame(step);
+  },
+  reveal(it, ov) {
+    ov.onclick = null; Profile.data.inv.unshift(it); Profile.save();
+    const rv = ov.querySelector('.co-reveal'); rv.style.setProperty('--rc', RARITY[it.r].c);
+    rv.innerHTML = ''; rv.appendChild(itemCanvas(it.w, it.s, 360, 144)); rv.insertAdjacentHTML('beforeend', `<b>${this.title(it)}</b><small>${RARITY[it.r].name} · ${wearName(it.wear)}</small>`);
+    setTimeout(() => rv.classList.add('show'), 30); if (it.r >= 3) ov.querySelector('.co-rays').classList.add('on');
+    Sound.ui('buy'); if (it.r >= 3) setTimeout(() => Sound.ui('buy'), 180);
+    const act = $('coAct'); act.innerHTML = `<button data-a="eq">Надеть</button><button data-a="sell">Продать за ◆ ${RARITY[it.r].sell}</button><button data-a="ok">Забрать</button>`;
+    act.querySelectorAll('button').forEach((b) => b.addEventListener('click', (e) => {
+      e.stopPropagation(); Sound.ui('click');
+      if (b.dataset.a === 'eq') this.equip(it); else if (b.dataset.a === 'sell') this.sell(it);
+      ov.classList.add('hidden'); this.busy = false; this.render();
+    }));
+  },
+  equip(it) {
+    const D = Profile.data;
+    if (WEAPONS[it.w].kind === 'knife') { D.knife = WEAPONS[it.w].knifeType; D.equip[it.w] = it.id; }
+    else D.equip[it.w] = it.id;
+    Profile.save(); VM.models = {}; // rebuild viewmodels with the new finish
+  },
+  unequip(it) { const D = Profile.data; if (D.equip[it.w] === it.id) delete D.equip[it.w]; if (WEAPONS[it.w].kind === 'knife' && D.knife === WEAPONS[it.w].knifeType) D.knife = null; Profile.save(); VM.models = {}; },
+  sell(it) { const D = Profile.data; this.unequip(it); D.inv = D.inv.filter((x) => x.id !== it.id); D.coins += RARITY[it.r].sell; Profile.save(); },
+  render() {
+    const body = $('csBody'); if (!body) return; const D = Profile.data;
+    $('csBal').textContent = '◆ ' + D.coins;
+    if (!this.tabsBound) { this.tabsBound = true; $('csTabs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { this.tab = b.dataset.t; this.sel = null; Sound.ui('click'); this.render(); })); }
+    $('csTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.t === this.tab));
+    body.innerHTML = '';
+    if (this.tab === 'cases') {
+      const g = document.createElement('div'); g.className = 'cs-cases';
+      for (const [k, C] of Object.entries(CASES)) {
+        const el = document.createElement('div'); el.className = 'cs-case';
+        const odds = C.w.map((w, i) => w ? `<span style="color:${RARITY[i].c}">${(w / C.w.reduce((a, b) => a + b, 0) * 100).toFixed(1)}%</span>` : '').filter(Boolean).join(' · ');
+        el.innerHTML = `<div class="box" style="background:linear-gradient(135deg,${C.col[0]},${C.col[1]})"></div><b>${C.name}</b><small>${odds}</small><button class="${D.coins >= C.price && !this.busy ? '' : 'no'}">Открыть · ◆ ${C.price}</button>`;
+        el.querySelector('button').addEventListener('click', () => this.open(k)); g.appendChild(el);
+      }
+      body.appendChild(g);
+      body.insertAdjacentHTML('beforeend', `<p class="sub" style="margin-top:14px">Как заработать ◆: убийство +3, в голову +5, матч +25, победа +60. Клик по рулетке — пропустить прокрутку.</p>`);
+      return;
+    }
+    const items = D.inv.filter((it) => (this.tab === 'knives') === (WEAPONS[it.w] && WEAPONS[it.w].kind === 'knife'));
+    if (this.tab === 'knives') {
+      const cur = D.knife ? KNIVES[D.knife] : 'Обычный нож';
+      body.insertAdjacentHTML('beforeend', `<p class="sub">В руке: <b style="color:var(--signal2)">${cur}</b>${D.knife ? ' <button class="ghost" id="knReset" style="display:inline-block;padding:2px 8px;margin-left:6px">снять</button>' : ''}. Ножи выпадают из кейсов (больше всего — из ножевого). У каждого свой осмотр на F.</p>`);
+      const kr = $('knReset'); if (kr) kr.addEventListener('click', () => { D.knife = null; for (const k of Object.keys(D.equip)) if (k.startsWith('k_')) delete D.equip[k]; Profile.save(); this.render(); });
+    }
+    if (!items.length) { body.insertAdjacentHTML('beforeend', `<div class="cs-empty">Пока пусто — открой кейс.</div>`); return; }
+    const sel = items.find((i) => i.id === this.sel);
+    if (sel) {
+      const eq = D.equip[sel.w] === sel.id;
+      body.insertAdjacentHTML('beforeend', `<div class="cs-act"><b style="align-self:center;margin-right:auto">${this.title(sel)} <small style="color:${RARITY[sel.r].c}">${wearName(sel.wear)} · ${sel.wear.toFixed(3)}${sel.st !== undefined ? ' · убийств: ' + sel.st : ''}</small></b><button data-a="eq">${eq ? 'Снять' : 'Надеть'}</button><button data-a="sell">Продать ◆ ${RARITY[sel.r].sell}</button></div>`);
+      body.querySelectorAll('.cs-act button').forEach((b) => b.addEventListener('click', () => { Sound.ui('click'); if (b.dataset.a === 'eq') (eq ? this.unequip(sel) : this.equip(sel)); else { this.sell(sel); this.sel = null; } this.render(); }));
+    }
+    const g = document.createElement('div'); g.className = 'cs-grid';
+    for (const it of items) {
+      const b = document.createElement('button'); b.className = 'cs-item' + (D.equip[it.w] === it.id ? ' eq' : '') + (this.sel === it.id ? ' sel' : ''); b.style.setProperty('--rc', RARITY[it.r].c);
+      b.appendChild(itemCanvas(it.w, it.s)); b.insertAdjacentHTML('beforeend', `<b>${it.st !== undefined ? 'ST™ ' : ''}${WEAPONS[it.w].name}</b><small>${SKINS[it.s].name}</small>`);
+      b.addEventListener('click', () => { this.sel = it.id; Sound.ui('click'); this.render(); }); g.appendChild(b);
+    }
+    body.appendChild(g);
+  },
+};
+
+// ------------------------------------------------------------ livelier animations
+// knives: each type has its own trick on F and on drawing; guns get a flourish when drawn,
+// and the whole viewmodel leans into strafes
+{
+  const ip = inspectPose;
+  inspectPose = function (d, P, it, w, g) {
+    if (d.kind !== 'knife' || !d.knifeType) return ip(d, P, it, w, g);
+    const o = _io; o.x = o.y = o.z = o.rx = o.ry = o.rz = 0;
+    const bell = (a, b) => smoothstep(a, a + (b - a) * 0.3, it) * (1 - smoothstep(b - (b - a) * 0.3, b, it));
+    const show = bell(0, 1);
+    switch (d.knifeType) {
+      case 'karambit': { const sp = smoothstep(0.15, 0.75, it); o.rz += sp * TAU * 2; o.x -= show * 0.06; o.y += show * 0.05; o.ry += bell(0.7, 1) * 1.1; break; } // spins around the finger ring
+      case 'butterfly': { const n = it * 6, f = smoothstep(0.1, 0.9, n % 1), ph = Math.floor(n) % 2; P.bg.rotation.x = ph ? Math.PI * (1 - f) : Math.PI * f; P.h2.rotation.x = -Math.sin(f * Math.PI) * 2.4; if (it > 0.92) { P.bg.rotation.x = 0; P.h2.rotation.x = 0; } o.ry += Math.sin(it * TAU * 3) * 0.4 * show; o.x -= show * 0.05; o.y += show * 0.04; break; }
+      case 'bayonet': { const t = clamp((it - 0.2) / 0.45, 0, 1), up = 4 * t * (1 - t); o.y += up * 0.14 + show * 0.03; o.rx -= t * TAU; o.ry += bell(0.65, 1) * 1.2; o.x -= show * 0.05; break; } // flip in the air and catch
+      default: { o.ry += bell(0, 0.5) * 1.3 - bell(0.5, 1) * 0.5; o.rz += bell(0, 0.5) * 0.4 + bell(0.5, 1) * -1.0; o.x -= show * 0.06; o.y += show * 0.04; o.rx += Math.sin(it * TAU) * 0.15; }
+    }
+    return o;
+  };
+  const vu = VM.update;
+  VM.update = function (dt, pl) {
+    vu.call(this, dt, pl); if (!this.cur) return;
+    const g = this.cur.group, P = this.cur.parts, w = pl.weapon; if (!w) return; const d = w.def, now = Game.time;
+    // lean into strafing
+    const lat = pl.vel.x * Math.cos(pl.yaw) - pl.vel.z * Math.sin(pl.yaw);
+    this.lean = damp(this.lean || 0, clamp(lat, -6, 6), 6, dt); g.rotation.z -= this.lean * 0.012; g.position.x -= this.lean * 0.0018;
+    // drawing flourishes
+    const dr = clamp((now - w.drawStart) / (d.draw || 0.6), 0, 1); if (dr >= 1) { if (P.bg && !(w.inspectT > 0)) { P.bg.rotation.x = 0; P.h2.rotation.x = 0; } return; }
+    const bell = (a, b) => smoothstep(a, a + (b - a) * 0.4, dr) * (1 - smoothstep(b - (b - a) * 0.4, b, dr));
+    if (d.kind === 'knife') {
+      if (d.knifeType === 'butterfly') { const f = smoothstep(0.1, 0.85, dr); P.bg.rotation.x = Math.PI * (1 - f); P.h2.rotation.x = -Math.sin(f * Math.PI) * 2.4; g.rotation.y += Math.sin(f * Math.PI) * 0.5; }
+      else if (d.knifeType === 'karambit') g.rotation.z += (1 - smoothstep(0, 0.9, dr)) * TAU;
+      else g.rotation.x += (1 - smoothstep(0, 0.9, dr)) * -TAU * 0.5;
+    } else if (d.kind === 'pistol' && !d.dual) { g.rotation.z += (1 - smoothstep(0, 0.8, dr)) * TAU * (d.id === 'r8' || d.id === 'deagle' ? 1 : 0.25); if (P.slide && d.id !== 'r8') P.slide.position.z = P.slide.userData.base.z + bell(0.55, 0.95) * 0.03; }
+    else if (P.bolt && (d.kind === 'rifle' || d.kind === 'smg')) { P.bolt.position.z = P.bolt.userData.base.z + bell(0.5, 0.95) * 0.04; g.rotation.z += bell(0.45, 1) * 0.25; }
+    else if (P.pump) { P.pump.position.z = bell(0.5, 0.95) * 0.07; g.rotation.z += bell(0.45, 1) * 0.2; }
+    else if (d.kind === 'sniper' && P.bolt) { const b = bell(0.45, 0.95); P.bolt.rotation.z = b * 1.2; P.bolt.position.z = P.bolt.userData.base.z + b * 0.05; }
+  };
+}
+
+// =====================================================================
 // BOOT & MAIN LOOP
 // =====================================================================
 let lastT = performance.now(), fpsAcc = 0, fpsN = 0;
@@ -7186,8 +7500,8 @@ function render() {
   if (Game.state === 'playing' && p && ((p.alive && !p.scoped) || (Killcam.active && Killcam.vmWeapon)) && VM.cur && VM.cur.group.visible) { renderer.clearDepth(); renderer.render(vmScene, vmCamera); }
 }
 // handle for automated checks and tinkering from the console
-window.__su = (a) => surfaceUnder(a); window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); Env.update(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Profile, Skins, Killcam, Secret, Rockets, Env, BR, Destr, Climb, Proj, Touch, Post, MAP: () => MAP, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, Sound, get camera() { return camera; }, get renderer() { return renderer; } };
+window.__su = (a) => surfaceUnder(a); window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); Env.update(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Profile, Skins, Killcam, Secret, Rockets, Env, BR, Destr, Climb, Proj, Touch, Post, MAP: () => MAP, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, Sound, Cases: () => Cases, Profile, get camera() { return camera; }, get renderer() { return renderer; } };
 boot();
 </script>
-</body>
-</html>
+
+</body></html>
