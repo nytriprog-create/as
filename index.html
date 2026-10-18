@@ -285,6 +285,9 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
 .cs-item.eq:before{content:"НАДЕТО";position:absolute;right:4px;top:4px;font-size:9px;font-weight:800;background:var(--signal);color:#111;padding:1px 4px}
 .cs-item.sel{outline:2px solid var(--signal2)}
 .cs-act{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.cs-item.none{opacity:.38;filter:grayscale(.7)}
+.cs-item em{position:absolute;left:4px;top:4px;font-style:normal;font-size:10px;font-weight:800;background:rgba(0,0,0,.6);padding:1px 5px}
+.cs-sec{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px;font-weight:700}
 .cs-empty{color:var(--muted);font-size:13px;padding:20px 0}
 #caseOpen{position:fixed;inset:0;z-index:60;background:rgba(5,6,8,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
 #caseOpen.hidden{display:none}
@@ -381,8 +384,8 @@ body.touch #lockhint{display:none!important}
       <div class="profile" id="profile"></div>
       <nav class="menu-nav" id="mainNav">
         <button data-pnl="pnlPlay" id="btnPlay">Играть<small>матч против ботов</small></button>
-        <button data-pnl="pnlCases">Кейсы<small>скины, ножи и инвентарь за ◆</small></button>
-        <button data-pnl="pnlSkins">Скины<small>раскраски оружия, открываются по уровню</small></button>
+        <button data-pnl="pnlCases" data-tab="cases">Кейсы<small>открыть за ◆, которые даются за игры</small></button>
+        <button data-pnl="pnlCases" data-tab="inv">Инвентарь<small>все скины и ножи, надеть и продать</small></button>
         <button data-pnl="pnlSettings">Настройки<small>мышь, графика, прицел, звук</small></button>
         <button data-pnl="pnlControls">Управление<small>клавиши и правила</small></button>
       </nav>
@@ -424,9 +427,9 @@ body.touch #lockhint{display:none!important}
   </section>
 
   <section class="panel hidden wide" id="pnlCases" aria-label="Кейсы и инвентарь">
-    <div class="cs-head"><h2>Кейсы</h2><div class="cs-bal" id="csBal">◆ 0</div></div>
+    <div class="cs-head"><h2 id="csTitle">Кейсы</h2><div class="cs-bal" id="csBal">◆ 0</div></div>
     <p class="sub">◆ даются за убийства и матчи. Открывай кейсы, надевай скины и ножи.</p>
-    <div class="cs-tabs" id="csTabs"><button data-t="cases" class="on">Кейсы</button><button data-t="inv">Инвентарь</button><button data-t="knives">Ножи</button></div>
+    <div class="cs-tabs" id="csTabs"><button data-t="cases" class="on">Кейсы</button><button data-t="inv">Инвентарь</button><button data-t="knives">Ножи</button><button data-t="all">Все скины</button></div>
     <div id="csBody"></div>
   </section>
   <section class="panel hidden" id="pnlSkins" aria-label="Скины">
@@ -5597,10 +5600,10 @@ const UI = {
     // main menu navigation
     document.querySelectorAll('#mainNav button').forEach((b) => b.addEventListener('click', () => {
       Sound.init(); Sound.startMenuMusic(); Sound.ui('click');
-      const id = b.dataset.pnl, open = !$(id).classList.contains('hidden');
+      const id = b.dataset.pnl, open = !$(id).classList.contains('hidden') && b.classList.contains('on');
       for (const pnl of ['pnlPlay', 'pnlCases', 'pnlSkins', 'pnlSettings', 'pnlControls']) $(pnl).classList.add('hidden');
       document.querySelectorAll('#mainNav button').forEach((x) => x.classList.remove('on'));
-      if (!open) { $(id).classList.remove('hidden'); b.classList.add('on'); if (id === 'pnlSettings') $('pnlSettings').appendChild($('setList')); if (id === 'pnlSkins') Skins.renderList(); if (id === 'pnlCases') Cases.render(); }
+      if (!open) { $(id).classList.remove('hidden'); b.classList.add('on'); if (id === 'pnlSettings') $('pnlSettings').appendChild($('setList')); if (id === 'pnlSkins') Skins.renderList(); if (id === 'pnlCases') { Cases.tab = b.dataset.tab || 'cases'; Cases.sel = null; Cases.render(); } }
     }));
     const pick = (sel, attr, cb) => document.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => { document.querySelectorAll(sel).forEach((x) => x.classList.remove('on')); b.classList.add('on'); Sound.ui('click'); cb && cb(b.dataset[attr]); }));
     pick('#sidePick .side', 'side'); pick('#segTod button', 'v'); pick('#segWeather button', 'v'); pick('#segSize button', 'v'); pick('#segLen button', 'v'); pick('#segDiff button', 'v'); pick('#mapPick .mapc', 'map');
@@ -5768,8 +5771,8 @@ const Profile = {
     const D = this.data; xp = Math.round(xp); D.xp += xp; this.session += xp;
     while (D.xp >= this.need(D.level)) {
       D.xp -= this.need(D.level); D.level++;
-      const opened = Object.values(SKINS).filter((s) => s.lvl === D.level).map((s) => '«' + s.name + '»');
-      if (Game.state === 'playing') { HUD.big('Уровень ' + D.level, this.rankName() + (opened.length ? ' · открыт скин ' + opened.join(', ') : ''), 'neutral', 3); Sound.ui('buy'); }
+      D.coins = (D.coins || 0) + 100; // skins now come from cases; a level-up pays out currency instead
+      if (Game.state === 'playing') { HUD.big('Уровень ' + D.level, this.rankName() + ' · +100 ◆', 'neutral', 3); Sound.ui('buy'); }
     }
     this.save(); this.render();
   },
@@ -7193,6 +7196,7 @@ Object.assign(SKINS, {
   damascus: { name: 'Дамасская сталь', caseOnly: true, r: 4, sw: '#8d939a', rough: 0.25, metal: 0.85, draw: (x, S) => { for (let j = 0; j < S; j++) for (let i = 0; i < S; i += 2) { const v = Math.sin(i * 0.09 + Math.sin(j * 0.05) * 4 + Math.sin(i * 0.02 + j * 0.03) * 3); const c = 110 + v * 70 | 0; x.fillStyle = `rgb(${c},${c + 4},${c + 10})`; x.fillRect(i, j, 2, 1); } } },
   doppler: { name: 'Допплер', caseOnly: true, r: 4, sw: '#1c8cff', rough: 0.15, metal: 0.8, emissive: true, draw: (x, S, R) => { const g = x.createLinearGradient(0, 0, S, S); g.addColorStop(0, '#0b1b5c'); g.addColorStop(0.5, '#1c8cff'); g.addColorStop(1, '#ff2fb0'); x.fillStyle = g; x.fillRect(0, 0, S, S); for (let k = 0; k < 120; k++) { x.fillStyle = `rgba(255,255,255,${R() * 0.25})`; x.beginPath(); x.arc(R() * S, R() * S, 1 + R() * 6, 0, TAU); x.fill(); } } },
 });
+for (const k of ['desert', 'forest', 'arctic', 'tiger', 'carbon', 'redline', 'neon']) SKINS[k].caseOnly = true;
 for (const k of ['desert', 'forest', 'arctic', 'tiger', 'carbon', 'redline', 'neon']) SKINS[k].r = { desert: 0, forest: 0, arctic: 1, tiger: 2, carbon: 1, redline: 2, neon: 3 }[k];
 const SKIN_BY_R = [0, 1, 2, 3, 4].map((r) => Object.keys(SKINS).filter((k) => SKINS[k].r === r && r < 4));
 const KNIFE_FINISH = ['fade', 'damascus', 'doppler', 'marble', 'tiger', 'dragon', 'galaxy', 'inferno', 'ice', 'neon'];
@@ -7259,7 +7263,7 @@ WEAPONS.knife.vmPos = WEAPONS.knife.vmPos || [0.14, -0.15, -0.3];
   const ms = Profile.matchStart.bind(Profile); Profile.matchStart = function () { ms(); this.matchCoins = 0; };
 }
 const _skinsOf = Skins.of.bind(Skins);
-Skins.of = function (id) { const it = Cases.equipped(id); return it ? it.s : _skinsOf(id); };
+Skins.of = function (id) { const it = Cases.equipped(id); if (it) return it.s; const g = _skinsOf(id); return g === 'gold' ? g : null; }; // level skins are gone; the secret gold stays
 { // the player carries the knife they equipped
   const rl = Actor.prototype.resetLoadout;
   Actor.prototype.resetLoadout = function (full) { rl.call(this, full); if (this === Game.player && Profile.data.knife && WEAPONS['k_' + Profile.data.knife] && (!this.slots[3] || this.slots[3].id !== 'k_' + Profile.data.knife)) this.slots[3] = makeWeapon('k_' + Profile.data.knife); };
@@ -7348,6 +7352,23 @@ const Cases = {
       ov.classList.add('hidden'); this.busy = false; this.render();
     }));
   },
+  renderAll(body) { // every finish in the game, and how many of each you own
+    const D = Profile.data, own = {}; for (const it of D.inv) own[it.s] = (own[it.s] || 0) + 1;
+    const keys = Object.keys(SKINS).filter((k) => SKINS[k].r !== undefined).sort((a, b) => SKINS[a].r - SKINS[b].r);
+    const total = keys.length + KNIFE_FINISH.length, got = keys.filter((k) => own[k]).length;
+    body.insertAdjacentHTML('beforeend', `<p class="sub">Собрано расцветок: <b style="color:var(--signal2)">${got} из ${keys.length}</b>. Цвет полоски — редкость. Выпадают из кейсов на любое оружие.</p>`);
+    for (let r = 0; r < 4; r++) {
+      const ks = keys.filter((k) => SKINS[k].r === r); if (!ks.length) continue;
+      body.insertAdjacentHTML('beforeend', `<div class="cs-sec" style="color:${RARITY[r].c}">${RARITY[r].name}</div>`);
+      const g = document.createElement('div'); g.className = 'cs-grid';
+      for (const k of ks) { const b = document.createElement('div'); b.className = 'cs-item' + (own[k] ? '' : ' none'); b.style.setProperty('--rc', RARITY[r].c); b.appendChild(itemCanvas(r === 3 ? 'awp' : r === 2 ? 'ak' : r === 1 ? 'm4' : 'deagle', k)); b.insertAdjacentHTML('beforeend', `${own[k] ? `<em>×${own[k]}</em>` : ''}<b>${SKINS[k].name}</b><small>${own[k] ? 'есть в инвентаре' : 'ещё не выпадал'}</small>`); g.appendChild(b); }
+      body.appendChild(g);
+    }
+    body.insertAdjacentHTML('beforeend', `<div class="cs-sec" style="color:${RARITY[4].c}">★ Ножи</div>`);
+    const g = document.createElement('div'); g.className = 'cs-grid'; const ownK = {}; for (const it of D.inv) if (it.r === 4) ownK[it.w] = (ownK[it.w] || 0) + 1;
+    for (const [k, n] of Object.entries(KNIVES)) { const b = document.createElement('div'); b.className = 'cs-item' + (ownK['k_' + k] ? '' : ' none'); b.style.setProperty('--rc', RARITY[4].c); b.appendChild(itemCanvas('k_' + k, 'fade')); b.insertAdjacentHTML('beforeend', `${ownK['k_' + k] ? `<em>×${ownK['k_' + k]}</em>` : ''}<b>★ ${n}</b><small>${KNIFE_FINISH.length} расцветок</small>`); g.appendChild(b); }
+    body.appendChild(g); void total;
+  },
   equip(it) {
     const D = Profile.data;
     if (WEAPONS[it.w].kind === 'knife') { D.knife = WEAPONS[it.w].knifeType; D.equip[it.w] = it.id; }
@@ -7359,6 +7380,7 @@ const Cases = {
   render() {
     const body = $('csBody'); if (!body) return; const D = Profile.data;
     $('csBal').textContent = '◆ ' + D.coins;
+    $('csTitle').textContent = { cases: 'Кейсы', inv: 'Инвентарь', knives: 'Ножи', all: 'Все скины' }[this.tab] || 'Кейсы';
     if (!this.tabsBound) { this.tabsBound = true; $('csTabs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { this.tab = b.dataset.t; this.sel = null; Sound.ui('click'); this.render(); })); }
     $('csTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.t === this.tab));
     body.innerHTML = '';
@@ -7374,6 +7396,7 @@ const Cases = {
       body.insertAdjacentHTML('beforeend', `<p class="sub" style="margin-top:14px">Как заработать ◆: убийство +3, в голову +5, матч +25, победа +60. Клик по рулетке — пропустить прокрутку.</p>`);
       return;
     }
+    if (this.tab === 'all') { this.renderAll(body); return; }
     const items = D.inv.filter((it) => (this.tab === 'knives') === (WEAPONS[it.w] && WEAPONS[it.w].kind === 'knife'));
     if (this.tab === 'knives') {
       const cur = D.knife ? KNIVES[D.knife] : 'Обычный нож';
