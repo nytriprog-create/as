@@ -328,6 +328,18 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
 .tr-list button.no{opacity:.4}
 .tr-close{margin-top:12px;justify-content:center}
 .seg.fun button{font-size:12px;padding:6px 10px}
+.ed-top{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.ed-top input,.ed-top select{background:rgba(255,255,255,.06);border:1px solid var(--line);color:inherit;padding:7px 10px;font:600 13px var(--f-ui)}
+.ed-top input{flex:1;min-width:140px}.ed-top select option{background:#222}
+.ed-wrap{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+#edCanvas{image-rendering:pixelated;border:1px solid var(--line);touch-action:none;cursor:crosshair;max-width:100%}
+.ed-side{flex:1;min-width:180px}
+.ed-pal{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.ed-pal button,.ed-size button,.ed-list button{all:unset;cursor:pointer;display:flex;align-items:center;gap:6px;padding:4px 6px;border:1px solid var(--line);font-size:11px}
+.ed-pal button i{width:12px;height:12px;display:block;flex:0 0 12px}
+.ed-pal button.on,.ed-size button.on{border-color:var(--signal);color:var(--signal2)}
+.ed-size{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:12px}
+.ed-list>div{display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}.ed-list b{flex:1;font-size:13px}
 .skin-row{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .skin-row b{font-size:14px}
 .skin-opts{display:flex;flex-wrap:wrap;gap:6px}
@@ -1715,7 +1727,8 @@ if (Settings.voice === undefined) Settings.voice = true;
 // =====================================================================
 // WORLD — map grid, merged static geometry, collision boxes, raycasts
 // =====================================================================
-const CELL = 2, MW = 44, MH = 44, ARCH_Y = 2.62;
+const CELL = 2, ARCH_Y = 2.62;
+let MW = 44, MH = 44; // grid size follows the loaded map
 const MAP_SRC_DUNE = [
   '############################################',
   '############################################',
@@ -1970,7 +1983,7 @@ const World = {
       s.cx = (s.x0 + s.x1) / 2; s.cz = (s.z0 + s.z1) / 2;
       for (const cell of this.cells) { const x = cellX(cell.c), z = cellZ(cell.r); if (cell.walk && x > s.x0 + 1.2 && x < s.x1 - 1.2 && z > s.z0 + 1.2 && z < s.z1 - 1.2) s.cells.push(cell); }
     }
-    this.stampArr = new Uint32Array(4096);
+    this.stampArr = new Uint32Array(1 << 17);
   },
   neighborsHave(cell, ch) { for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = this.cell(cell.c + dc, cell.r + dr); if (n && n.ch === ch) return true; } return false; },
 
@@ -2196,7 +2209,7 @@ const World = {
         const ry = R() * TAU, secret = MAP.secret && cell.c === 26 && cell.r === 2, red = R() >= 0.6 && !secret;
         this.breakable(cell, 'metal', red ? 25 : 90, [{ cyl: [bx, bz, r, h, ry], mat: red ? 'barrelRed' : 'barrel' }], { explosive: red, fixed: secret });
       }
-    } else if (ch === 'p') { if (MAP.snow) this.addPine(x + jx, z + jz, R); else this.addPalm(x + jx, z + jz, R); }
+    } else if (ch === 'p') { if (MAP.metro) { boxGeo(gb('concrete'), x - 0.4, 0, z - 0.4, x + 0.4, 4.4, z + 0.4, { world: true, col: 0.9 }); this.addSolid(x - 0.4, 0, z - 0.4, x + 0.4, 4.4, z + 0.4, 'stone'); } else if (MAP.snow) this.addPine(x + jx, z + jz, R); else this.addPalm(x + jx, z + jz, R); }
     else if (ch === 's') this.addShrub(x + jx * 2, z + jz * 2, R);
   },
   addPalm(x, z, R) {
@@ -2291,7 +2304,7 @@ const World = {
     this.cells = []; this.boxes = []; this.grid = []; this.spawns = { T: [], CT: [] }; this.sites = {}; this.ready = false; this.secret = null;
   },
   load(id) {
-    MAP = MAPS[id] || MAPS.dune; this.reset(); this.parse(); this.build(); Nav.build(); applyTheme(); HUD.radarImg = HUD.renderRadarImage(8); Game.menuPath = null;
+    MAP = MAPS[id] || MAPS.dune; MH = MAP.src.length; MW = MAP.src[0].length; this.reset(); this.parse(); this.build(); Nav.build(); applyTheme(); HUD.radarImg = HUD.renderRadarImage(8); Game.menuPath = null;
   },
 };
 const GROUND = { mat: 'sand', pen: 0, surf: 'sand', x0: -1e4, x1: 1e4, y0: -10, y1: 0, z0: -1e4, z1: 1e4, id: -1 };
@@ -2368,6 +2381,155 @@ function onResize() {
   if (!renderer) return; renderer.setSize(innerWidth, innerHeight, false);
   camera.aspect = vmCamera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); vmCamera.updateProjectionMatrix(); if (typeof Post !== 'undefined') Post.resize();
 }
+
+// =====================================================================
+// MAPS 2 — de_metro (a railway station with a train), br_island (a big
+// map for battle royale) and the player's own maps from the editor
+// =====================================================================
+const MAP_SRC_METRO = [
+  '############################################',
+  '############################################',
+  '##____________###_________________________##',
+  '##_aaaaaaaaaaa###_______________kkkkkkkkk_##',
+  '##_aaaaaaaaxaa##_WWWwWWWwWWW____kkkkkkkkk_##',
+  '##_aaaCaaaaaaa##_W,,,,,,,,,W____kkkkkkkkk_##',
+  '##_aaaaaaaaaaa.._W,c,,,,,,,W____kkkkkkkkk_##',
+  '##_caaaaaaaaaa.._W,,,,,,,,,W______________##',
+  '##_aaaaaaacaaa##_D,,,,,,,,,D______________##',
+  '##_aaaaaaaaaaa##_W,,,x,,,,,W_____X________##',
+  '##_aoaaaaaaaaa##_W,,,,,,,C,W________o_____##',
+  '##_aaaaaaaaaaa##_W,,,,,,,,,W______________##',
+  '##______c_____##_WWWWDDWWWWW______________##',
+  '##____________##______________cc__________##',
+  '##________________________________________##',
+  '##________________________________________##',
+  '##RR11RRRRRRRR11RRRRRRRRRRRR11RRRRRRRR11RR##',
+  '##2222222222222222222222222222222222222222##',
+  '##222p22222p22222p22222p22222p22222p222222##',
+  '##2222221122222222222222222222222211222222##',
+  '##=......................................=##',
+  '##=......................................=##',
+  '##=......................................=##',
+  '##=......................................=##',
+  '##2222221122222222222222222222222211222222##',
+  '##222p22222p22222p22222p22222p22222p222222##',
+  '##2222222222222222222222222222222222222222##',
+  '##RR11RRRRRRRR11RRRRRRRRRRRR11RRRRRRRR11RR##',
+  '##____s___________________________________##',
+  '##__________X_____________##______________##',
+  '##______c______WWWWDDWWWWW##_bbbbbbbbbbbb_##',
+  '##_______c_____W,,,,,,,,,W##_bbbbbbbbbbob_##',
+  '##_____________W,c,,,,,,,W##_bbCbbbbbbbbb_##',
+  '##__o__________W,,,,,,,,,W.._bbbbbbbbbbbb_##',
+  '##_____________D,,,,,,,,,D.._bbbbbXbbbbbb_##',
+  '##__________s__W,,,x,,,,,W##_bbbbbbbbcbbb_##',
+  '##_____________W,,,,,,,C,W##_bbbbbbbbbbbb_##',
+  '##_ttttttttt___W,,,,,,,,,W##_bbbbxbbbbbbb_##',
+  '##_ttttttttt___WWWwWWWwWWW##_bcbbbbbbbbbb_##',
+  '##_ttttttttt______________##_bbbbbbbbbbbb_##',
+  '##_ttttttttt______________##______________##',
+  '##________________________________________##',
+  '############################################',
+  '############################################'
+];
+const MAP_SRC_ISLAND = [
+  '########################################################################',
+  '########################################################################',
+  '##.................................__.................................##',
+  '##.......x..............s..........__...........................X.....##',
+  '##.._.........WWWwwW...............__........................kkkkkk...##',
+  '##..._1111....w,,,cD...............__........................kkkkkk...##',
+  '##.X..1221X...w,,,,Ws..............__....................WDwWkkkkkk...##',
+  '##....1221....WWWDwW.s..........s..__....................W,,,kkkkkk...##',
+  '##....1111..........s...........s..__....................w,,,,,w......##',
+  '##......._.......x...............WWWWwWW.................W,,x,,w......##',
+  '##..x....._......................w,,,,,w.........WWWW....WwwwwDW......##',
+  '##..WwWWDwW_....s................D,,,,,W.........D,cw.................##',
+  '##..W,x,,,w._........WWDwW.......w,,,,,D.........W,,Ws................##',
+  '##..w,,,,,w.._...o...w,,,W....s..w,,,,,W.........WDWW.................##',
+  '##..WDWWWWW..._......D,oxw....C..WWWwWwW.....................##.......##',
+  '##............._...c.WWWWW.........__.....................x.s.........##',
+  '##........s....._s...............1111....x..........c.......C.........##',
+  '##..............._...............1221...##...................WDwW.....##',
+  '##................_......WWWwWW..1221.................WWWW...W,oW.....##',
+  '##......s...WWWW..._.....W,,,,D..1111.................w,,W...Do#w.....##',
+  '##..........W,,w...._....D,,,,W....__.....1111........w,,D...WWWW.....##',
+  '##..........D,,W....._...WWWWwW....__.....1221.s......W,,W...C........##',
+  '##..........W,,D......_............__.....1221........W,,W............##',
+  '##..........W,,W......._.........WWwwWWW..1111........WDWW.....s......##',
+  '##..........WWwW........_........W,,,,,W...........................X..##',
+  '##......................._.......Wc,,,,D....................c.........##',
+  '##..........WwWWDW........_WWwwW.WwDwWwW..............................##',
+  '##..........w,,,,W.........W,,,W...__.......X.........................##',
+  '##.....s....Wo,,,W.........w,xcD.s.__............s.....X..............##',
+  '##..........WWwwDW..x......WDwWW...__.....WWWwWW..C...................##',
+  '##............................aaaa.__.....W,,,,W......................##',
+  '##.....s................s.....aaaa.__.....D,,,,D......................##',
+  '##............................aaaa.__.....WwWWWW...........s..........##',
+  '##........................s...aaaa.__........X..........WDWW..c.......##',
+  '##..s.............WWWWDWW.........___...................W,,W..........##',
+  '##________________W,,,,,D_______________________________D,,W__________##',
+  '##________________W,,,,,W_______________________WWWDWwW_w,,W__________##',
+  '##.......X........W,,,,,w........1111_..........w,,x,,W.w,,w..........##',
+  '##................WWWWWWW........1221.bbbb......D,,,,,w.WWWW..........##',
+  '##.....##..............c....s....1221.bbbb......WwWwWwW...............##',
+  '##.......C.......................1111.bbbb............................##',
+  '##.........s.......................__sbbbb.......WwDwwWW..............##',
+  '##.....##...................##..c..__....._......w,,,,,D..............##',
+  '##.....##...................##...x.__...x.s_.....W,,,,,W..............##',
+  '##..............x......C.........c.__.X....._....WWWWWWW..............##',
+  '##............WWDW.WWWwW...........__........_...s....................##',
+  '##............W,,W.D,x,W...........__........._.......................##',
+  '##.o.C.x......W,,W.W,,,w...........__.......s.._......WWwW........C...##',
+  '##............w,,w.W,,,w...........__....WDwW.WWWW....W,,D............##',
+  '##............w,,W.W,,cW........WWWwWW...W,,w.w,,D....D,,w..........s.##',
+  '##............WWDW.WDwWW........D,,,xW...w,,W.w,,W_s.CWWwW............##',
+  '##.........................##...W,,,,W...w,,W.W,,W._..................##',
+  '##.......WWWWW..................W,,,,w...WwDW.WDwW.._..WWwWW....WWwW..##',
+  '##.......W,,,w..................WwDwWW..............._.w,x,D....D,,w..##',
+  '##.......D,,,D.X...................__...........WWwwW._W,,,w....W,,W..##',
+  '##....s..Wo,,W.................C...__........##.W,,,w..WWDWW....W,,w..##',
+  '##.......WwWWW.....................__........##.D,,xw..._.......w,cw..##',
+  '##............s....................__...........WDWWW...._......WDWW..##',
+  '##......................s.WwWDwW...__...X.......x........._...........##',
+  '##.........WWDWW..........W,,,,w...__......................_..........##',
+  '##....##...w,,,W......x...Dx,,,W...__...WwwWW..............._.........##',
+  '##.........W,,,W..........W,,,,ws..__...D,,,W................_........##',
+  '##.........W,,,W........o.W,,,,W...__...Wx,,w.............s...WDWW....##',
+  '##.........W,,,w.........XWWWwwW...__...WWWDW.................W,,D.C..##',
+  '##...ttttttWWWDW...................__..s......................W,,W.c..##',
+  '##...tttttt....s...C...............__.........................W,,W....##',
+  '##...tttttt........##...........s..__......................c..W,,W_...##',
+  '##...tttttt........................__.........................WwwW._..##',
+  '##.......................C.........__......s.......................s..##',
+  '##.................................__.................................##',
+  '########################################################################',
+  '########################################################################'
+];
+Object.assign(MAPS, {
+  metro: {
+    id: 'metro', name: 'de_metro', desc: 'Станция метро: платформы и пути посередине — по ним ходит поезд. Вокзал у A, депо у B.', src: MAP_SRC_METRO, metro: true,
+    zones: [['Точка A', 2, 13, 2, 13], ['Точка B', 28, 41, 29, 40], ['База спецназа', 30, 41, 2, 8], ['База террористов', 2, 12, 36, 41], ['Вокзал', 16, 28, 3, 13], ['Депо', 14, 26, 29, 39], ['Платформы', 2, 41, 16, 27]],
+    watch: { CT: { A: [[8, 13], [14.5, 6.5]], B: [[26.5, 33.5], [34, 28]], mid: [[21.5, 15], [21.5, 27]] }, T: { A: [[8, 4], [13, 8]], B: [[34, 35], [38, 32]] } },
+    via: { A: [[4.5, 21.5], [14.5, 27.5]], B: [[38.5, 21.5], [28.5, 27.5]] }, midHold: [[21.5, 14], [24, 15], [19, 15]],
+    signs: [], cables: [], ladders: [], roofSpots: [], zips: [], roofDeco: [],
+    menuPath: [[-30, 5, -30], [0, 6, -34], [30, 5, -30], [34, 5, 0], [30, 5, 30], [0, 6, 34], [-30, 5, 30], [-34, 5, 0]],
+    train: { player: [35, 15.5, 0], area: [30, 40, 7, 14] },
+    subway: { rows: [20, 23] },
+    theme: { sand: 'concreteDark', sandstone: 'concrete', plaster: 'tilesCold', plaster2: 'plasterCold', tiles: 'tilesDark' },
+    sky: { zen: [0.2, 0.27, 0.42], hor: [0.66, 0.66, 0.68], gnd: [0.5, 0.5, 0.52], cloud: 0.6, fog: 0xa8acb2, fogNear: 50, fogFar: 380, sun: 0xfff2e0, sunI: 2.4, hemiSky: 0xc8d2e2, hemiGnd: 0x76736e, hemiI: 1.2, envGnd: 0x77736c },
+  },
+  island: {
+    id: 'island', name: 'br_island', desc: 'Огромный остров с восемью посёлками, холмами и дорогами. Создан для королевской битвы.', src: MAP_SRC_ISLAND, big: true, brScale: 1.6,
+    zones: [['Северо-запад', 2, 30, 2, 30], ['Северо-восток', 40, 69, 2, 30], ['Юго-запад', 2, 30, 40, 69], ['Юго-восток', 40, 69, 40, 69], ['Перекрёсток', 30, 41, 30, 41]],
+    watch: { CT: { A: [[31.5, 28], [28, 31.5]], B: [[39.5, 44], [44, 39.5]], mid: [[35.5, 30], [30, 35.5]] }, T: { A: [[31.5, 31.5], [30, 30]], B: [[39.5, 39.5], [41, 41]] } },
+    via: { A: [[20, 50], [35.5, 50]], B: [[50, 50], [35.5, 45]] }, midHold: [[35.5, 25], [25, 35.5], [45, 35.5]],
+    signs: [], cables: [], ladders: [], roofSpots: [], zips: [], roofDeco: [],
+    menuPath: [[-50, 14, -50], [0, 16, -60], [50, 14, -50], [60, 14, 0], [50, 14, 50], [0, 16, 60], [-50, 14, 50], [-60, 14, 0]],
+    train: { player: [35.5, 34, 0], area: [30, 41, 25, 33] },
+    theme: {}, sky: { zen: [0.1, 0.32, 0.68], hor: [0.76, 0.8, 0.8], gnd: [0.62, 0.6, 0.5], cloud: 0.45, fog: 0xc9d6d8, fogNear: 90, fogFar: 600, sun: 0xfff3dc, sunI: 3.0, hemiSky: 0xc4d8f5, hemiGnd: 0x8f8a62, hemiI: 1.1, envGnd: 0x8a8460 },
+  },
+});
 
 // =====================================================================
 // FX — instanced billboard particles, decals, tracers, shells, lights
@@ -5625,9 +5787,9 @@ const UI = {
     document.querySelectorAll('#mainNav button').forEach((b) => b.addEventListener('click', () => {
       Sound.init(); Sound.startMenuMusic(); Sound.ui('click');
       const id = b.dataset.pnl, open = !$(id).classList.contains('hidden') && b.classList.contains('on');
-      for (const pnl of ['pnlPlay', 'pnlCases', 'pnlSkins', 'pnlSettings', 'pnlControls']) $(pnl).classList.add('hidden');
+      for (const pnl of ['pnlPlay', 'pnlCases', 'pnlEditor', 'pnlSkins', 'pnlSettings', 'pnlControls']) $(pnl).classList.add('hidden');
       document.querySelectorAll('#mainNav button').forEach((x) => x.classList.remove('on'));
-      if (!open) { $(id).classList.remove('hidden'); b.classList.add('on'); if (id === 'pnlSettings') $('pnlSettings').appendChild($('setList')); if (id === 'pnlSkins') Skins.renderList(); if (id === 'pnlCases') { Cases.tab = b.dataset.tab || 'cases'; Cases.sel = null; Cases.render(); } }
+      if (!open) { $(id).classList.remove('hidden'); b.classList.add('on'); if (id === 'pnlSettings') $('pnlSettings').appendChild($('setList')); if (id === 'pnlSkins') Skins.renderList(); if (id === 'pnlEditor') Editor.render(); if (id === 'pnlCases') { Cases.tab = b.dataset.tab || 'cases'; Cases.sel = null; Cases.render(); } }
     }));
     const pick = (sel, attr, cb) => document.querySelectorAll(sel).forEach((b) => b.addEventListener('click', () => { document.querySelectorAll(sel).forEach((x) => x.classList.remove('on')); b.classList.add('on'); Sound.ui('click'); cb && cb(b.dataset[attr]); }));
     pick('#sidePick .side', 'side'); pick('#segTod button', 'v'); pick('#segWeather button', 'v'); pick('#segSize button', 'v'); pick('#segLen button', 'v'); pick('#segDiff button', 'v'); pick('#mapPick .mapc', 'map');
@@ -6353,11 +6515,11 @@ const BR = {
       if (a.ai) a.ai.reset();
     }
     // loot: guns lying around the whole map, plus armour, medkits and grenades
-    const nGuns = Math.round(G.actors.length * 3.2 + 8), nItems = Math.round(G.actors.length * 2.2 + 6);
+    const LK = Math.pow(MAP.brScale || 1, 2) * 0.85 + 0.15, nGuns = Math.round((G.actors.length * 3.2 + 8) * LK), nItems = Math.round((G.actors.length * 2.2 + 6) * LK);
     for (let k = 0; k < nGuns; k++) { const c = choice(walk); Drops.place(choice(BR_LOOT), cellX(c.c) + rand(-0.6, 0.6), cellZ(c.r) + rand(-0.6, 0.6)); }
     for (let k = 0; k < nItems; k++) { const c = choice(walk); this.addItem(choice(BR_ITEMS), cellX(c.c) + rand(-0.6, 0.6), cellZ(c.r) + rand(-0.6, 0.6)); }
     // the zone starts covering everything
-    this.zone = { cx: rand(-8, 8), cz: rand(-8, 8), r: 66, stage: 0, state: 'wait', t: BR_STAGES[0].wait, from: null, to: null, tick: 0 };
+    this.zone = { cx: rand(-8, 8), cz: rand(-8, 8), r: 66 * (MAP.brScale || 1), stage: 0, state: 'wait', t: BR_STAGES[0].wait, from: null, to: null, tick: 0 };
     this.pickNext(); this.total = G.actors.length; this.place = 0;
     if (!this.mesh) this.makeMesh(); this.mesh.visible = true;
     const p = G.player; VM.set(p.weapon.id, p.team); HUD.slots(); HUD.bomb(); $('killer').classList.add('hidden');
@@ -6365,9 +6527,9 @@ const BR = {
     HUD.big('Королевская битва', `${this.total} игроков · оружие лежит на карте · зона сужается`, 'neutral', 4);
   },
   pickNext() {
-    const Z = this.zone, S = BR_STAGES[Math.min(Z.stage, BR_STAGES.length - 1)], room = Math.max(0, Z.r - S.r);
-    for (let k = 0; k < 30; k++) { const a = rand(0, TAU), d = Math.sqrt(Math.random()) * room, x = Z.cx + Math.cos(a) * d, z = Z.cz + Math.sin(a) * d; if (Math.abs(x) < 36 && Math.abs(z) < 36) { Z.next = { cx: x, cz: z, r: S.r }; return; } }
-    Z.next = { cx: Z.cx, cz: Z.cz, r: S.r };
+    const Z = this.zone, S = BR_STAGES[Math.min(Z.stage, BR_STAGES.length - 1)], K = MAP.brScale || 1, room = Math.max(0, Z.r - S.r * K);
+    for (let k = 0; k < 30; k++) { const a = rand(0, TAU), d = Math.sqrt(Math.random()) * room, x = Z.cx + Math.cos(a) * d, z = Z.cz + Math.sin(a) * d; if (Math.abs(x) < 36 * K && Math.abs(z) < 36 * K) { Z.next = { cx: x, cz: z, r: S.r * K }; return; } }
+    Z.next = { cx: Z.cx, cz: Z.cz, r: S.r * K };
   },
   makeMesh() {
     const g = new THREE.CylinderGeometry(1, 1, 70, 96, 1, true); g.translate(0, 30, 0);
@@ -7085,7 +7247,7 @@ HUD.paintHit = function (col) {
   el.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(${rgb},.55) 0, rgba(${rgb},.35) 9%, rgba(${rgb},0) 22%)`;
   el.style.transition = 'none'; el.style.opacity = 1; void el.offsetWidth; el.style.transition = 'opacity 1.6s ease-in'; el.style.opacity = 0;
 };
-BR_LOOT.push('makarov', 'm1911', 'g18', 'mac10', 'bizon', 'thompson', 'nova', 'saiga', 'ak74', 'm4a1s', 'mosin', 'negev', 'gelblaster', 'beretta', 'usp', 'cz75', 'uzi', 'mp7', 'vector', 'aug', 'sg553', 'svd', 'mag7', 'dualies', 'dual_uzi', 'dual_deagle', 'multipump', 'paintball', 'nerf', 'pcp');
+BR_LOOT.push('gravgun', 'portalgun', 'makarov', 'm1911', 'g18', 'mac10', 'bizon', 'thompson', 'nova', 'saiga', 'ak74', 'm4a1s', 'mosin', 'negev', 'gelblaster', 'beretta', 'usp', 'cz75', 'uzi', 'mp7', 'vector', 'aug', 'sg553', 'svd', 'mag7', 'dualies', 'dual_uzi', 'dual_deagle', 'multipump', 'paintball', 'nerf', 'pcp');
 
 // ------------------------------------------------------------ shop: pages of categories
 const BUY_PAGES = [
@@ -7096,9 +7258,9 @@ const BUY_PAGES = [
     { name: 'Дробовики и пулемёты', items: ['sg12', 'nova', 'mag7', 'dbarrel', 'auto12', 'saiga', 'm249', 'negev'] },
     { name: 'Винтовки', items: ['galil', 'famas', 'ak', 'ak74', 'm4', 'm4a1s', 'aug', 'sg553'] },
     { name: 'Снайперские', items: ['scout', 'mosin', 'svd', 'awp', 'g3sg1'] },
-    { name: 'Снаряжение', items: ['vest', 'vesthelm', 'kit', 'flashlight'] },
+    { name: 'Снаряжение и модули', items: ['vest', 'vesthelm', 'kit', 'flashlight', 'mod_sil', 'mod_dot', 'mod_ext'] },
     { name: 'Гранаты', items: ['flash', 'smoke', 'he', 'molotov', 'incendiary'] },
-    { name: 'Модули и патроны', items: ['mod_sil', 'mod_dot', 'mod_ext', 'ammo_p', 'ammo_s', 'ammo_gl'] },
+    { name: 'Фантастика и патроны', items: ['gravgun', 'portalgun', 'ammo_p', 'ammo_s', 'ammo_gl'] },
   ] },
   { name: 'Игрушечное и пневматика', cats: [
     { name: 'Пневматика', items: ['bbpistol', 'multipump', 'pcp'] },
@@ -7557,7 +7719,7 @@ WEAPONS.lava = { id: 'lava', name: 'Лава', kind: 'env', reward: 0 };
 Object.assign(GEAR, { hook: { name: 'Крюк-кошка (H)', price: 250, hook: true } });
 { // shop: sci-fi on the exotic page, the hook next to armour
   const ex = BUY_PAGES.find((p) => p.name === 'Экзотика'); if (ex) ex.cats.splice(ex.cats.length - 1, 0, { name: 'Фантастика', items: ['gravgun', 'portalgun'] });
-  const eq = BUY_PAGES[0].cats.find((c) => c.name === 'Снаряжение'); if (eq) eq.items.push('hook');
+  const eq = BUY_PAGES[0].cats.find((c) => c.name.startsWith('Снаряжение')); if (eq) eq.items.splice(4, 0, 'hook');
   const bs = Game.buyState, buy = Game.buy;
   Game.buyState = function (a, id) { if (id === 'hook') return a.hasHook ? 'own' : a.money < this.priceOf(id, a) ? 'money' : 'ok'; return bs.call(this, a, id); };
   Game.buy = function (a, id, silent) {
@@ -7569,6 +7731,7 @@ Object.assign(GEAR, { hook: { name: 'Крюк-кошка (H)', price: 250, hook:
   };
   const rl = Actor.prototype.resetLoadout;
   Actor.prototype.resetLoadout = function (full) { rl.call(this, full); if (full) this.hasHook = isBR() || (Game.free && !!this.hasHook); this.hook = null; this.heldBy = null; };
+  const dp = Drops.pickup.bind(Drops); Drops.pickup = function (a, d) { if (a.isBot && d.w && d.w.def.tool) return false; return dp(a, d); };
   const ds = Drops.spawn.bind(Drops); Drops.spawn = function (w, a) { if (w && w.def.tool) return; return ds(w, a); }; // sci-fi guns vanish with their owner
 }
 
@@ -7948,6 +8111,204 @@ const Fun = {
   document.body.insertAdjacentHTML('beforeend', '<div id="slowFx"></div>');
 }
 addEventListener('keydown', (e) => { if (Fun.traderOpen && e.code === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); Fun.closeTrader(); } }, true);
+
+// =====================================================================
+// MAPS 3 — the metro train, shadows that follow you on the big island,
+// map picker buttons and the map editor (player-made maps)
+// =====================================================================
+WEAPONS.train = { id: 'train', name: 'Поезд', kind: 'env', reward: 0 };
+
+// ------------------------------------------------------------ the metro train
+const Subway = {
+  mesh: null, x: 0, state: 'idle', t: 20, dir: 1,
+  build() {
+    const g = new THREE.Group(), body = new THREE.MeshStandardMaterial({ color: 0x2f5fa8, roughness: 0.45, metalness: 0.5 }), white = new THREE.MeshStandardMaterial({ color: 0xdfe3e6, roughness: 0.4, metalness: 0.3 }),
+      glass = new THREE.MeshStandardMaterial({ color: 0x9ccbe6, emissive: 0xfff2c8, emissiveIntensity: 0.6, roughness: 0.1 }), dark = new THREE.MeshStandardMaterial({ color: 0x1b1d20, roughness: 0.8 }), lamp = new THREE.MeshBasicMaterial({ color: 0xfff8d0 });
+    for (let k = 0; k < 3; k++) {
+      const x = k * 15;
+      part(g, geoBox(14.4, 2.6, 3.2), body, x, 1.9, 0); part(g, geoBox(14.4, 0.5, 3.24), white, x, 3.35, 0); part(g, geoBox(14.5, 0.55, 3.25), white, x, 0.75, 0);
+      for (let w = 0; w < 6; w++) for (const s of [-1, 1]) part(g, geoBox(1.5, 0.9, 0.05), glass, x - 5.6 + w * 2.25, 2.3, s * 1.62);
+      for (const wx of [-5, 5]) for (const s of [-1, 1]) part(g, geoCylZ(0.45, 0.45, 0.25, 14), dark, x + wx, 0.45, s * 1.35).rotation.set(0, 0, 0);
+      part(g, geoBox(14.6, 0.3, 2.8), dark, x, 0.35, 0);
+    }
+    for (const end of [-7.35, 37.35]) { part(g, geoBox(0.1, 1.0, 2.4), glass, end, 2.4, 0); for (const s of [-1, 1]) part(g, new THREE.SphereGeometry(0.16, 8, 6), lamp, end, 1.3, s * 1.05); }
+    g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    this.mesh = g; this.len = 44.7;
+  },
+  start() {
+    this.stop(); if (!MAP.subway) return;
+    if (!this.mesh) this.build();
+    const [r0, r1] = MAP.subway.rows; this.z = (cellZ(r0) + cellZ(r1)) / 2; this.half = MW * CELL / 2 + 30;
+    this.state = 'idle'; this.t = rand(18, 30); this.mesh.visible = false; scene.add(this.mesh);
+  },
+  stop() { if (this.mesh && this.mesh.parent) scene.remove(this.mesh); this.state = 'idle'; },
+  update(dt) {
+    if (!MAP.subway || !this.mesh || !this.mesh.parent || Game.state !== 'playing') return;
+    this.t -= dt;
+    if (this.state === 'idle' && this.t <= 4) { this.state = 'warn'; this.dir = Math.random() < 0.5 ? 1 : -1; this.horn(); HUD.chat('Поезд! Уходи с путей.', 'sys'); }
+    if (this.state === 'warn' && this.t <= 0) { this.state = 'run'; this.x = -this.dir * (this.half + this.len); this.mesh.visible = true; this.rumbleT = 0; }
+    if (this.state === 'run') {
+      this.x += this.dir * 32 * dt; const x0 = this.dir > 0 ? this.x : this.x - this.len, x1 = x0 + this.len;
+      this.mesh.position.set(this.dir > 0 ? this.x - this.len + 7.2 : this.x - this.len + 7.2, 0, this.z); this.mesh.position.x = x0 + 7.2;
+      for (const a of Game.actors) if (a.alive && Math.abs(a.pos.z - this.z) < 2.0 && a.pos.x > x0 - 0.5 && a.pos.x < x1 + 0.5 && a.pos.y < 2.5) {
+        a.vel.set(this.dir * 18, 7, (a.pos.z > this.z ? 1 : -1) * 6); a.onGround = false; a.jumped = true; a.flyUntil = Game.time + 0.4;
+        applyDamage(a, null, 400, 'fall', WEAPONS.train, a.pos.clone().add(UP), UP, false);
+      }
+      for (const c of (typeof Fun !== 'undefined' ? Fun.chickens.slice() : [])) if (Math.abs(c.pos.z - this.z) < 2 && c.pos.x > x0 && c.pos.x < x1) Fun.killChicken(c, null);
+      this.rumbleT -= dt; if (this.rumbleT <= 0) { this.rumbleT = 0.25; const o = Sound.out(_v1.set(clamp(camera.position.x, x0, x1), 1.5, this.z), { gain: 1.2, ref: 8, maxDist: 120 }); if (o) Sound.noise(o, Sound.t, 0.35, { f: 120, q: 0.6, gain: 1, type: 'lowpass' }); }
+      const d = camera.position.distanceTo(_v1.set(clamp(camera.position.x, x0, x1), 1.5, this.z)); if (d < 14) FX.shake = Math.max(FX.shake, 0.12 * (1 - d / 14));
+      if ((this.dir > 0 && x0 > this.half) || (this.dir < 0 && x1 < -this.half)) { this.state = 'idle'; this.t = rand(30, 45); this.mesh.visible = false; }
+    }
+  },
+  horn() { const o = Sound.out(_v1.set(-this.dir * 40, 2, this.z), { gain: 1.4, ref: 20, maxDist: 200, important: true }); if (o) { const t = Sound.t; for (const f of [311, 392]) { Sound.tone(o, t, 1.4, { f, gain: 0.25, type: 'sawtooth', attack: 0.05 }); Sound.tone(o, t + 1.7, 0.9, { f, gain: 0.25, type: 'sawtooth', attack: 0.05 }); } } },
+};
+{
+  const sm = Game.startMatch, gu = Game.update, eu = Env.update;
+  Game.startMatch = function (cfg) { const r = sm.call(this, cfg); Subway.start(); const mn = $('mapname'); if (mn) mn.textContent = MAP.name; return r; };
+  Game.update = function (dt) { gu.call(this, dt); Subway.update(dt); };
+  // on the big island the sun's shadow box travels with you
+  Env.update = function (dt) {
+    eu.call(this, dt);
+    if (MAP.big && Game.state === 'playing') { const c = camera.position, s = 4; sun.target.position.set(Math.round(c.x / s) * s, 0, Math.round(c.z / s) * s); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR, 110); }
+    else if (sun.target.position.lengthSq() > 0) { sun.target.position.set(0, 0, 0); }
+  };
+}
+
+// ------------------------------------------------------------ player-made maps
+const MAP_STORE = 'asastrike.maps';
+const CUSTOM_THEMES = {
+  desert: { name: 'Пустыня', from: 'dune' }, snow: { name: 'Снег', from: 'frost' }, metro: { name: 'Метро', from: 'metro' },
+};
+function loadCustomMaps() { try { return JSON.parse(localStorage.getItem(MAP_STORE) || '[]'); } catch (e) { return []; } }
+function saveCustomMaps(list) { try { localStorage.setItem(MAP_STORE, JSON.stringify(list)); } catch (e) { /* storage full or off */ } }
+function makeCustomMap(def) {
+  const src = def.src, N = src.length, base = MAPS[CUSTOM_THEMES[def.theme] ? CUSTOM_THEMES[def.theme].from : 'dune'];
+  const cellsOf = (ch) => { const out = []; for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (src[r][c] === ch) out.push([c + 0.5, r + 0.5]); return out; };
+  const centre = (ch) => { const L = cellsOf(ch); if (!L.length) return [N / 2, N / 2]; return [L.reduce((s, p) => s + p[0], 0) / L.length, L.reduce((s, p) => s + p[1], 0) / L.length]; };
+  const A = centre('a'), B = centre('b'), T = centre('t'), K = centre('k'), mid = [N / 2, N / 2];
+  const near = (p, d) => [[p[0] + d, p[1]], [p[0], p[1] + d], [p[0] - d, p[1] - d]];
+  const box = (ch) => { const L = cellsOf(ch); if (!L.length) return [0, 0, 0, 0]; return [Math.min(...L.map((p) => p[0] | 0)), Math.max(...L.map((p) => p[0] | 0)), Math.min(...L.map((p) => p[1] | 0)), Math.max(...L.map((p) => p[1] | 0))]; };
+  const w = N * CELL / 2 - 6;
+  return {
+    id: def.id, name: def.name, desc: 'Своя карта из редактора.', src, custom: true, snow: base.snow, metro: base.metro,
+    zones: [['Точка A', ...box('a')], ['Точка B', ...box('b')], ['База террористов', ...box('t')], ['База спецназа', ...box('k')]],
+    watch: { CT: { A: near(A, 2), B: near(B, 2), mid: [mid] }, T: { A: near(A, 1), B: near(B, 1) } },
+    via: { A: [[(T[0] + A[0]) / 2, (T[1] + A[1]) / 2]], B: [[(T[0] + B[0]) / 2, (T[1] + B[1]) / 2]] }, midHold: [mid],
+    signs: [], cables: [], ladders: [], roofSpots: [], zips: [], roofDeco: [],
+    menuPath: [[-w, 6, -w], [0, 7, -w], [w, 6, -w], [w, 7, 0], [w, 6, w], [0, 7, w], [-w, 6, w], [-w, 7, 0]],
+    train: { player: [K[0], K[1], 0], area: [Math.max(2, K[0] - 6 | 0), Math.min(N - 3, K[0] + 6 | 0), Math.max(2, K[1] - 6 | 0), Math.min(N - 3, K[1] + 6 | 0)] },
+    theme: base.theme, sky: base.sky,
+  };
+}
+for (const d of loadCustomMaps()) MAPS[d.id] = makeCustomMap(d);
+
+// ------------------------------------------------------------ map picker: the new maps get buttons too
+function addMapButton(id) {
+  const host = $('mapPick'); if (!host || host.querySelector(`[data-map="${id}"]`)) return null;
+  const M = MAPS[id], b = document.createElement('button'); b.className = 'mapc'; b.dataset.map = id;
+  b.innerHTML = `<canvas id="mp_${id}" width="200" height="200"></canvas><b>${M.name}</b><span>${M.custom ? 'своя карта' : M.desc.split(':')[0].split('.')[0]}</span>`;
+  host.appendChild(b); return b;
+}
+for (const id of Object.keys(MAPS)) if (id !== 'dune' && id !== 'frost') addMapButton(id);
+function bindMapButton(b) { b.addEventListener('click', () => { document.querySelectorAll('#mapPick .mapc').forEach((x) => x.classList.remove('on')); b.classList.add('on'); Sound.ui('click'); }); drawMapPreview(b.querySelector('canvas'), MAPS[b.dataset.map].src); }
+
+// ------------------------------------------------------------ the editor
+const ED_TILES = [
+  ['.', 'Песок', '#b59c6e'], [',', 'Плитка', '#8f8572'], ['_', 'Бетон', '#6f6e69'], ['1', 'Ступень 0,5 м', '#a59878'], ['2', 'Помост 1 м', '#c7b892'],
+  ['#', 'Высокая стена', '#2a2620'], ['W', 'Стена дома', '#4d4538'], ['R', 'Кирпич', '#6b3a2b'], ['D', 'Дверь', '#7a5b33'], ['w', 'Окно', '#4f7a8f'], ['=', 'Арка / туннель', '#5c4f3b'],
+  ['c', 'Ящик', '#8a6239'], ['C', 'Большой ящик', '#6e4a28'], ['x', 'Военный ящик', '#55603a'], ['X', 'Штабель', '#3f472c'], ['o', 'Бочка', '#9c3a2a'], ['p', 'Дерево / колонна', '#9a9a92'], ['s', 'Куст', '#5f7d3a'],
+  ['a', 'Точка A', '#d0574a'], ['b', 'Точка B', '#4a7fd0'], ['t', 'Спавн T', '#d8a23a'], ['k', 'Спавн CT', '#3a8fd8'],
+];
+const ED_COL = Object.fromEntries(ED_TILES.map(([k, , c]) => [k, c]));
+const Editor = {
+  N: 44, grid: null, brush: '#', size: 1, theme: 'desert', name: 'Моя карта', id: null, painting: false, cs: 12,
+  blank() { const N = this.N; this.grid = Array.from({ length: N }, (_, r) => Array.from({ length: N }, (_, c) => (r < 2 || c < 2 || r >= N - 2 || c >= N - 2 ? '#' : '.'))); },
+  from(id) { const src = MAPS[id].src; this.N = src.length; this.grid = src.map((row) => row.split('')); },
+  render() {
+    const host = $('edBody'); if (!host) return;
+    if (!this.grid) this.blank();
+    const list = loadCustomMaps();
+    host.innerHTML = `
+      <div class="ed-top">
+        <input id="edName" maxlength="24" value="${this.name.replace(/"/g, '')}" placeholder="название карты">
+        <select id="edTheme">${Object.entries(CUSTOM_THEMES).map(([k, t]) => `<option value="${k}" ${k === this.theme ? 'selected' : ''}>${t.name}</option>`).join('')}</select>
+        <select id="edTpl"><option value="">Начать с…</option><option value="blank">пустой карты</option>${['dune', 'frost', 'metro'].map((k) => `<option value="${k}">${MAPS[k].name}</option>`).join('')}</select>
+      </div>
+      <div class="ed-wrap"><canvas id="edCanvas"></canvas>
+        <div class="ed-side"><div class="ed-pal">${ED_TILES.map(([k, n, c]) => `<button data-k="${k}" class="${k === this.brush ? 'on' : ''}" title="${n}"><i style="background:${c}"></i>${n}</button>`).join('')}</div>
+          <div class="ed-size">Кисть: ${[1, 2, 3].map((s) => `<button data-s="${s}" class="${s === this.size ? 'on' : ''}">${s}×${s}</button>`).join('')}</div>
+          <p class="sub" style="margin:6px 0">ЛКМ — рисовать, ПКМ — стереть в песок. Края карты всегда стены.</p></div></div>
+      <div class="cs-act"><button id="edCheck">Проверить</button><button id="edSave">Сохранить</button><button id="edPlay">Сохранить и играть</button><span id="edMsg" class="cs-msg"></span></div>
+      ${list.length ? `<div class="cs-sec">Мои карты</div><div class="ed-list">${list.map((m) => `<div><b>${m.name}</b><button data-load="${m.id}">Открыть</button><button data-del="${m.id}">Удалить</button></div>`).join('')}</div>` : ''}`;
+    const cnv = $('edCanvas'), N = this.N, cs = this.cs = Math.max(6, Math.floor(Math.min(440, (host.clientWidth || 700) - 230) / N));
+    cnv.width = cnv.height = N * cs; this.draw();
+    const at = (e) => { const r = cnv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left) / r.width * N), Math.floor((e.clientY - r.top) / r.height * N)]; };
+    cnv.addEventListener('contextmenu', (e) => e.preventDefault());
+    cnv.addEventListener('pointerdown', (e) => { e.preventDefault(); cnv.setPointerCapture(e.pointerId); this.painting = e.button === 2 ? '.' : this.brush; this.paint(...at(e)); });
+    cnv.addEventListener('pointermove', (e) => { if (this.painting) this.paint(...at(e)); });
+    const stop = () => { this.painting = false; }; cnv.addEventListener('pointerup', stop); cnv.addEventListener('pointercancel', stop);
+    host.querySelectorAll('.ed-pal button').forEach((b) => b.addEventListener('click', () => { this.brush = b.dataset.k; host.querySelectorAll('.ed-pal button').forEach((x) => x.classList.toggle('on', x === b)); Sound.ui('click'); }));
+    host.querySelectorAll('.ed-size button').forEach((b) => b.addEventListener('click', () => { this.size = +b.dataset.s; host.querySelectorAll('.ed-size button').forEach((x) => x.classList.toggle('on', x === b)); }));
+    $('edName').addEventListener('input', (e) => { this.name = e.target.value; }); $('edName').addEventListener('keydown', (e) => e.stopPropagation());
+    $('edTheme').addEventListener('change', (e) => { this.theme = e.target.value; });
+    $('edTpl').addEventListener('change', (e) => { const v = e.target.value; if (!v) return; if (v === 'blank') { this.N = 44; this.blank(); } else this.from(v); this.id = null; this.render(); });
+    $('edCheck').addEventListener('click', () => this.msg(this.check()));
+    $('edSave').addEventListener('click', () => { const r = this.check(); if (r.err) { this.msg(r); return; } this.save(); this.msg({ ok: 'Сохранено. Карта появилась в выборе карт.' }); this.render(); });
+    $('edPlay').addEventListener('click', () => { const r = this.check(); if (r.err) { this.msg(r); return; } const id = this.save(); this.play(id); });
+    host.querySelectorAll('[data-load]').forEach((b) => b.addEventListener('click', () => { const m = loadCustomMaps().find((x) => x.id === b.dataset.load); if (!m) return; this.grid = m.src.map((r) => r.split('')); this.N = m.src.length; this.name = m.name; this.theme = m.theme; this.id = m.id; this.render(); }));
+    host.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => { const id = b.dataset.del; saveCustomMaps(loadCustomMaps().filter((x) => x.id !== id)); delete MAPS[id]; const mb = document.querySelector(`#mapPick [data-map="${id}"]`); if (mb) { if (mb.classList.contains('on')) document.querySelector('#mapPick [data-map="dune"]').classList.add('on'); mb.remove(); } if (this.id === id) this.id = null; this.render(); }));
+  },
+  paint(c, r) {
+    const N = this.N, h = this.size - 1;
+    for (let rr = r - (h >> 1); rr <= r + Math.ceil(h / 2); rr++) for (let cc = c - (h >> 1); cc <= c + Math.ceil(h / 2); cc++) {
+      if (rr < 2 || cc < 2 || rr >= N - 2 || cc >= N - 2) continue; this.grid[rr][cc] = this.painting;
+    }
+    this.draw();
+  },
+  draw() {
+    const cnv = $('edCanvas'); if (!cnv) return; const x = cnv.getContext('2d'), N = this.N, cs = this.cs;
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) { x.fillStyle = ED_COL[this.grid[r][c]] || '#b59c6e'; x.fillRect(c * cs, r * cs, cs, cs); }
+    x.strokeStyle = 'rgba(0,0,0,0.12)'; x.lineWidth = 1; x.beginPath(); for (let k = 0; k <= N; k++) { x.moveTo(k * cs + 0.5, 0); x.lineTo(k * cs + 0.5, N * cs); x.moveTo(0, k * cs + 0.5); x.lineTo(N * cs, k * cs + 0.5); } x.stroke();
+    x.font = `bold ${Math.max(8, cs)}px sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#fff';
+    for (const [ch, L] of [['a', 'A'], ['b', 'B'], ['t', 'T'], ['k', 'CT']]) { let sc = 0, sr = 0, n = 0; for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (this.grid[r][c] === ch) { sc += c; sr += r; n++; } if (n) x.fillText(L, (sc / n + 0.5) * cs, (sr / n + 0.5) * cs); }
+  },
+  check() {
+    const N = this.N, G = this.grid, count = (ch) => G.reduce((s, row) => s + row.filter((x) => x === ch).length, 0);
+    for (const [ch, n] of [['t', 'спавн T'], ['k', 'спавн CT'], ['a', 'точку A'], ['b', 'точку B']]) if (count(ch) < 2) return { err: `Добавь ${n} (минимум 2 клетки).` };
+    if (count('t') < 4 || count('k') < 4) return { err: 'Спавнам нужно хотя бы по 4 клетки, чтобы все поместились.' };
+    const H = { 1: 0.5, 2: 1 }, wall = new Set(['#', 'W', 'R', 'w']), block = new Set(['c', 'C', 'x', 'X', 'o', 'p']);
+    const ok = (ch) => !wall.has(ch) && !block.has(ch), start = (() => { for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (G[r][c] === 't') return [r, c]; })();
+    const seen = new Set([start.join()]), q = [start];
+    while (q.length) { const [r, c] = q.shift(); for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const rr = r + dr, cc = c + dc, k = rr + ',' + cc; if (seen.has(k) || rr < 0 || cc < 0 || rr >= N || cc >= N) continue; const ch = G[rr][cc]; if (!ok(ch) || (H[ch] || 0) - (H[G[r][c]] || 0) > 0.55) continue; seen.add(k); q.push([rr, cc]); } }
+    const reach = (ch) => { for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (G[r][c] === ch && seen.has(r + ',' + c)) return true; return false; };
+    for (const [ch, n] of [['k', 'спавна CT'], ['a', 'точки A'], ['b', 'точки B']]) if (!reach(ch)) return { err: `От спавна T не дойти до ${n}. Помост 1 м поднимается только через ступень 0,5 м.` };
+    return { ok: 'Карта в порядке, можно играть.' };
+  },
+  msg(r) { const m = $('edMsg'); if (!m) return; m.style.color = r.err ? '#eb4b4b' : '#7fd8ff'; m.textContent = r.err || r.ok; Sound.ui(r.err ? 'deny' : 'click'); },
+  save() {
+    const list = loadCustomMaps(), N = this.N;
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (r < 2 || c < 2 || r >= N - 2 || c >= N - 2) this.grid[r][c] = '#';
+    const id = this.id || 'u' + Date.now().toString(36), def = { id, name: (this.name || 'Моя карта').trim().slice(0, 24), theme: this.theme, src: this.grid.map((r) => r.join('')) };
+    const i = list.findIndex((m) => m.id === id); if (i >= 0) list[i] = def; else list.push(def); saveCustomMaps(list);
+    this.id = id; MAPS[id] = makeCustomMap(def);
+    let b = document.querySelector(`#mapPick [data-map="${id}"]`); if (!b) { b = addMapButton(id); bindMapButton(b); } else { b.querySelector('b').textContent = def.name; drawMapPreview(b.querySelector('canvas'), def.src); }
+    if (MAP.id === id) World.load(id); // rebuild if it is the map on screen
+    return id;
+  },
+  play(id) {
+    document.querySelectorAll('#mapPick .mapc').forEach((x) => x.classList.toggle('on', x.dataset.map === id));
+    $('pnlEditor').classList.add('hidden'); $('pnlPlay').classList.remove('hidden');
+    document.querySelectorAll('#mainNav button').forEach((x) => x.classList.toggle('on', x.dataset.pnl === 'pnlPlay'));
+    $('btnStart').click();
+  },
+};
+{ // menu entry
+  const nav = $('mainNav'), ref = nav && nav.querySelector('[data-pnl="pnlSettings"]');
+  if (ref && !$('pnlEditor')) {
+    ref.insertAdjacentHTML('beforebegin', '<button data-pnl="pnlEditor">Редактор карт<small>нарисуй свою карту и сыграй на ней</small></button>');
+    $('pnlCases').insertAdjacentHTML('afterend', '<section class="panel hidden wide" id="pnlEditor" aria-label="Редактор карт"><h2>Редактор карт</h2><p class="sub">Рисуй клетками: одна клетка — 2 метра. Нужны спавны T и CT и точки A и B.</p><div id="edBody"></div></section>');
+  }
+}
 
 // =====================================================================
 // BOOT & MAIN LOOP
