@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>As a Strike</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -275,6 +279,11 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
 .tbtn.on{background:rgba(255,125,36,.45);border-color:#ffb066}
 #tFire{background:rgba(240,74,59,.3);font-size:15px}
 .tbtn.small{width:44px;height:44px;line-height:44px;border-radius:10px;font-size:16px}
+#tSlots{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;gap:6px;pointer-events:auto}
+#tSlots b{display:block;min-width:54px;padding:6px 8px 5px;border-radius:9px;background:rgba(20,24,28,.45);border:1px solid rgba(255,255,255,.25);color:#e8e8e8;font:700 11px var(--f-ui);text-align:center;white-space:nowrap}
+#tSlots b i{display:block;font-style:normal;font-size:9px;color:rgba(255,255,255,.5)}
+#tSlots b.on{background:rgba(255,125,36,.42);border-color:#ffb066;color:#fff}
+.tbtn.dim{opacity:.35}
 #tRing{position:absolute;width:120px;height:120px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.05);display:none;pointer-events:none}
 #tKnob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.4)}
 .touch-only{display:none}
@@ -286,6 +295,7 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
 #buyTabs .bt-hint{font-size:11px;color:var(--dim);margin-left:auto}
 .bi{box-sizing:border-box}
 .bi .n{overflow-wrap:anywhere;hyphens:auto}
+.bi .n i{white-space:nowrap;overflow-wrap:normal}
 .bi .p em{font-style:normal;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:1px 5px;border-radius:3px;margin-left:8px;vertical-align:2px}
 .bi .p em.toy{background:rgba(80,200,255,.18);color:#8fdcff}
 .bi .p em.dual{background:rgba(255,125,36,.2);color:var(--signal)}
@@ -312,6 +322,9 @@ body.touch #lockhint{display:none!important}
 #killcam b{position:absolute;left:50%;top:84px;transform:translateX(-50%);background:var(--bad);color:#fff;padding:4px 14px;font-family:var(--f-display);font-weight:400;letter-spacing:.2em}
 #killcam span{position:absolute;left:50%;top:118px;transform:translateX(-50%);font-weight:700;text-shadow:0 1px 3px #000;white-space:nowrap}
 </style>
+</head>
+<body>
+
 
 <canvas id="gl" tabindex="-1"></canvas>
 
@@ -1394,14 +1407,15 @@ const SHOT_RECIPES = {
 const Sound = {
   ctx: null, master: null, music: null, reverb: null, noiseBuf: null, voices: 0, lp: new THREE.Vector3(),
   init() {
-    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    if (this.ctx) { this.heal(); return; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     let ctx; try { ctx = this.ctx = new AC(); } catch (e) { return; }
     this.master = ctx.createGain(); this.master.gain.value = Settings.volume;
     const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -12; comp.ratio.value = 5; comp.attack.value = 0.002; comp.release.value = 0.2;
     this.muffle = ctx.createBiquadFilter(); this.muffle.type = 'lowpass'; this.muffle.frequency.value = 20000;
-    this.master.connect(this.muffle); this.muffle.connect(comp); comp.connect(ctx.destination);
+    this.master.connect(this.muffle); this.muffle.connect(comp); comp.connect(ctx.destination); this.comp = comp;
     this.music = ctx.createGain(); this.music.gain.value = Settings.music * 0.5; this.music.connect(comp);
+    this.probe = ctx.createAnalyser(); this.probe.fftSize = 256; comp.connect(this.probe); this.probeBuf = new Float32Array(256);
     const len = ctx.sampleRate * 2, nb = ctx.createBuffer(1, len, ctx.sampleRate), d = nb.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; this.noiseBuf = nb;
     const rl = Math.floor(ctx.sampleRate * 1.8), ir = ctx.createBuffer(2, rl, ctx.sampleRate);
@@ -1416,10 +1430,32 @@ const Sound = {
     const rg = ctx.createGain(); rg.gain.value = 0.5; this.reverb.connect(rg); rg.connect(this.master);
     this.startAmbience();
   },
+  // the sound used to die for good: the browser suspends the context (tab hidden, phone call, screen lock),
+  // or one bad sample (NaN) jams the filter/compressor chain. Wake it up and rebuild the chain when that happens.
+  heal() {
+    const ctx = this.ctx; if (!ctx) return;
+    if (ctx.state !== 'running' && ctx.state !== 'closed') { try { const r = ctx.resume(); if (r && r.catch) r.catch(() => {}); } catch (e) { /* not allowed yet */ } }
+    if (ctx.state !== 'running') return;
+    if (this.voices > 0 && performance.now() - (this.lastOut || 0) > 4000) this.voices = 0; // timers throttled in a hidden tab
+    this.voices = Math.max(0, this.voices || 0);
+    if (this.probe) {
+      this.probe.getFloatTimeDomainData(this.probeBuf); let bad = false;
+      for (let i = 0; i < this.probeBuf.length; i++) if (!Number.isFinite(this.probeBuf[i])) { bad = true; break; }
+      if (bad) this.rebuildChain();
+    }
+  },
+  rebuildChain() {
+    const ctx = this.ctx; try { this.master.disconnect(); this.muffle.disconnect(); this.comp.disconnect(); this.music.disconnect(); } catch (e) { /* already gone */ }
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -12; comp.ratio.value = 5; comp.attack.value = 0.002; comp.release.value = 0.2;
+    this.muffle = ctx.createBiquadFilter(); this.muffle.type = 'lowpass'; this.muffle.frequency.value = 20000;
+    this.master.connect(this.muffle); this.muffle.connect(comp); comp.connect(ctx.destination); this.music.connect(comp); comp.connect(this.probe); this.comp = comp;
+    if (this.reverb) { const buf = this.reverb.buffer; try { this.reverb.disconnect(); } catch (e) { /* */ } this.reverb = ctx.createConvolver(); this.reverb.buffer = buf; const rg = ctx.createGain(); rg.gain.value = 0.5; this.reverb.connect(rg); rg.connect(this.master); }
+    console.warn('audio chain rebuilt');
+  },
   setVolume() { if (this.master) this.master.gain.value = Settings.volume; if (this.music) this.music.gain.value = Settings.music * 0.5; },
   get t() { return this.ctx ? this.ctx.currentTime : 0; },
   updateListener(pos, fwd) {
-    if (!this.ctx) return; const L = this.ctx.listener; this.lp.copy(pos);
+    if (!this.ctx || !Number.isFinite(pos.x + pos.y + pos.z + fwd.x + fwd.y + fwd.z)) return; const L = this.ctx.listener; this.lp.copy(pos);
     if (L.positionX) { L.positionX.value = pos.x; L.positionY.value = pos.y; L.positionZ.value = pos.z; L.forwardX.value = fwd.x; L.forwardY.value = fwd.y; L.forwardZ.value = fwd.z; L.upX.value = 0; L.upY.value = 1; L.upZ.value = 0; }
     else { L.setPosition(pos.x, pos.y, pos.z); L.setOrientation(fwd.x, fwd.y, fwd.z, 0, 1, 0); }
   },
@@ -1427,9 +1463,10 @@ const Sound = {
   out(pos, o = {}) {
     const ctx = this.ctx; if (!ctx || ctx.state !== 'running') return null;
     if (this.voices > 46 && !o.important) return null;
+    if (pos && !(Number.isFinite(pos.x) && Number.isFinite(pos.y) && Number.isFinite(pos.z))) return null;
     const dist = pos ? pos.distanceTo(this.lp) : 0;
     if (pos && dist > (o.maxDist || 90)) return null;
-    this.voices++; setTimeout(() => this.voices--, (o.life || 1) * 1000 + 100);
+    this.voices++; this.lastOut = performance.now(); setTimeout(() => { this.voices = Math.max(0, this.voices - 1); }, (o.life || 1) * 1000 + 100);
     const g = ctx.createGain(); g.gain.value = o.gain ?? 1;
     let tail = g;
     if (pos) {
@@ -5642,6 +5679,7 @@ const UI = {
     check('post', 'Свечение и цветокоррекция (не на низком качестве)'); range('bloom', 'Сила свечения', 0, 1.2, 0.05, (v) => Math.round(v * 100) + '%');
     if (Touch.on) range('touchSens', 'Чувствительность пальца', 0.3, 3, 0.05, (v) => (+v).toFixed(2));
     if (Touch.on) check('touchInvert', 'Обратный обзор пальцем по вертикали');
+    if (Touch.on) { if (Settings.haptics === undefined) Settings.haptics = true; check('haptics', 'Вибрация при выстрелах и попаданиях'); }
     if (Touch.on) { if (Settings.autoFire === undefined) Settings.autoFire = true; if (Settings.aimAssist === undefined) Settings.aimAssist = true; check('autoFire', 'Автострельба, когда прицел на враге'); }
     if (Settings.aimAssist === undefined) Settings.aimAssist = Touch.on; check('aimAssist', 'Помощь в прицеливании');
     check('showFps', 'Показывать FPS'); check('blood', 'Кровь и брызги'); check('radarRotate', 'Радар поворачивается вместе с игроком');
@@ -6339,6 +6377,8 @@ const Touch = {
     for (const [id, label, l, t] of [['tPause', '❚❚', 'auto', 10], ['tBuy', '$', 'auto', 10], ['tBoard', '☰', 'auto', 10]]) { const d = document.createElement('div'); d.className = 'tbtn small'; d.id = id; d.textContent = label; d.style.top = t + 'px'; root.appendChild(d); }
     $('tPause').style.right = '12px'; $('tBuy').style.right = '64px'; $('tBoard').style.right = '116px';
     root.insertAdjacentHTML('beforeend', '<div id="tRing"><i id="tKnob"></i></div>');
+    root.insertAdjacentHTML('beforeend', '<div id="tSlots"></div>');
+    $('tSlots').addEventListener('touchstart', (e) => { const b = e.target.closest('[data-s]'); if (!b) return; e.stopPropagation(); e.preventDefault(); const p = Game.player; if (p && p.alive) { p.select(+b.dataset.s); this.vibe(8); } }, { passive: false });
     const opts = { passive: false };
     root.addEventListener('touchstart', (e) => this.start(e), opts);
     root.addEventListener('touchmove', (e) => this.move(e), opts);
@@ -6393,7 +6433,12 @@ const Touch = {
         continue;
       }
       const d = this.drag && this.drag[t.identifier];
-      if (d) { const s = 2.4 * (Settings.touchSens || 1); Input.dx += (t.clientX - d.x) * s; Input.dy -= (t.clientY - d.y) * s * (Settings.touchInvert ? -1 : 1); d.x = t.clientX; d.y = t.clientY; }
+      if (d) {
+        const mx = t.clientX - d.x, my = t.clientY - d.y, p = Game.player, sp = Math.abs(mx) + Math.abs(my);
+        // slow drags are precise, fast flicks turn further; aiming down sights calms it down
+        const acc = 0.85 + clamp((sp - 3) / 28, 0, 0.75), aim = p && p.ads ? 0.7 : 1;
+        const s = 2.4 * (Settings.touchSens || 1) * acc * aim; Input.dx += mx * s; Input.dy -= my * s * (Settings.touchInvert ? -1 : 1); d.x = t.clientX; d.y = t.clientY;
+      }
     }
   },
   end(e) {
@@ -6411,7 +6456,28 @@ const Touch = {
     const show = this.editing || (Game.state === 'playing' && !Game.paused && !UI.buyOpen && Game.phase !== 'over');
     $('touch').classList.toggle('hidden', !show);
     if (!show && (Input.lmb || Input.rmb)) { Input.lmb = Input.rmb = false; }
+    if (show && !this.editing) this.updateExtras();
     const p = Game.player, w = p && p.weapon; $('tAim').style.display = w && (w.def.kind === 'sniper' || w.def.fan || w.def.duplet || w.def.gl || w.def.optic || p.lightMode || (w.mods && w.mods.dot)) ? 'block' : 'none';
+  },
+  vibe(ms) { if (Settings.haptics === false || !navigator.vibrate) return; const now = performance.now(); if (now - (this.vibeT || 0) < 60) return; this.vibeT = now; try { navigator.vibrate(ms); } catch (e) { /* not supported */ } },
+  updateExtras() {
+    const p = Game.player; if (!p) return; const now = Game.time;
+    // weapon strip: tap a gun to take it, tap grenades again to cycle
+    const sig = p.alive ? [1, 2, 3, 4, 5, 6].map((k) => (k === 4 ? p.slots[4].map((x) => x.id).join('+') : p.slots[k] ? p.slots[k].id : '')).join('|') + p.curSlot + (p.slots[4][p.nadeIdx] || {}).id : 'dead';
+    if (sig !== this.slotSig) {
+      this.slotSig = sig; const short = (d) => d.name.replace(/\s*\(.*\)/, '').replace('Двойные ', '2× ').slice(0, 11);
+      $('tSlots').innerHTML = !p.alive ? '' : [1, 2, 3, 4, 5, 6].filter((k) => (k === 4 ? p.slots[4].length : p.slots[k])).map((k) => {
+        const w = k === 4 ? (p.curSlot === 4 ? p.slots[4][p.nadeIdx] : p.slots[4][0]) : p.slots[k];
+        return `<b data-s="${k}" class="${p.curSlot === k ? 'on' : ''}"><i>${k}</i>${short(w.def)}${k === 4 && p.slots[4].length > 1 ? ' ×' + p.slots[4].length : ''}</b>`;
+      }).join('');
+    }
+    // context buttons: E lights up when there's something to use, grenades/flashlight only when you have them
+    const site = World.siteAt(p.pos.x, p.pos.z), useful = p.alive && ((p.hasBomb() && site) || (p.team === 'CT' && Game.bomb.state === 'planted' && Game.bomb.pos && p.pos.distanceTo(Game.bomb.pos) < 2.2) || Drops.nearest(p.pos, 2.2) || (typeof Climb !== 'undefined' && Climb.nearZip && Climb.nearZip(p)));
+    $('tUse').classList.toggle('dim', !useful);
+    $('tNade').style.display = p.slots[4].length ? 'block' : 'none'; $('tLight').style.display = p.hasLight ? 'block' : 'none';
+    $('tLight').classList.toggle('on', !!p.lightMode && Env.flashOn);
+    // pistols reload on their own on the phone when the magazine runs dry
+    const w = p.weapon; if (p.alive && w && w.def.mag && w.ammo === 0 && w.reserve > 0 && !w.reloading && now - w.lastShot > 0.35 && !Input.lmb) startReload(p);
   },
   enterFullscreen() {
     if (!this.on) return;
@@ -6954,16 +7020,16 @@ BR_LOOT.push('makarov', 'm1911', 'g18', 'mac10', 'bizon', 'thompson', 'nova', 's
 
 // ------------------------------------------------------------ shop: pages of categories
 const BUY_PAGES = [
-  { name: 'Стандартное', cats: [
-    { name: 'Пистолеты', items: ['p18', 'k45', 'beretta', 'usp', 'cz75', 'tec9', 'five', 'deagle', 'r8'] },
-    { name: 'Двойные', items: ['dualies', 'dual_deagle', 'dual_r8', 'dual_uzi'] },
-    { name: 'Пистолеты-пулемёты', items: ['vp9', 'mp5sd', 'uzi', 'mp7', 'ump', 'vector', 'p90'] },
-    { name: 'Тяжёлое', items: ['sg12', 'mag7', 'dbarrel', 'auto12', 'm249'] },
-    { name: 'Винтовки', items: ['galil', 'famas', 'ak', 'm4', 'aug', 'sg553', 'scout', 'svd', 'awp'] },
+  { name: 'Всё оружие', cats: [
+    { name: 'Пистолеты', items: ['p18', 'k45', 'beretta', 'usp', 'makarov', 'm1911', 'cz75', 'g18', 'tec9', 'five', 'deagle', 'r8'] },
+    { name: 'Двойные', items: ['dualies', 'dual_glock', 'dual_deagle', 'dual_r8', 'dual_uzi', 'dual_mac10'] },
+    { name: 'Пистолеты-пулемёты', items: ['vp9', 'mp5sd', 'uzi', 'mac10', 'mp7', 'ump', 'bizon', 'vector', 'thompson', 'p90'] },
+    { name: 'Дробовики и пулемёты', items: ['sg12', 'nova', 'mag7', 'dbarrel', 'auto12', 'saiga', 'm249', 'negev'] },
+    { name: 'Винтовки', items: ['galil', 'famas', 'ak', 'ak74', 'm4', 'm4a1s', 'aug', 'sg553'] },
+    { name: 'Снайперские', items: ['scout', 'mosin', 'svd', 'awp', 'g3sg1'] },
     { name: 'Снаряжение', items: ['vest', 'vesthelm', 'kit', 'flashlight'] },
     { name: 'Гранаты', items: ['flash', 'smoke', 'he', 'molotov', 'incendiary'] },
-    { name: 'Модули', items: ['mod_sil', 'mod_dot', 'mod_ext'] },
-    { name: 'Патроны', items: ['ammo_p', 'ammo_s', 'ammo_gl'] },
+    { name: 'Модули и патроны', items: ['mod_sil', 'mod_dot', 'mod_ext', 'ammo_p', 'ammo_s', 'ammo_gl'] },
   ] },
   { name: 'Игрушечное и пневматика', cats: [
     { name: 'Пневматика', items: ['bbpistol', 'multipump', 'pcp'] },
@@ -6971,16 +7037,6 @@ const BUY_PAGES = [
     { name: 'Игрушки', items: ['water', 'nerf', 'slingshot', 'capgun', 'gelblaster'] },
     { name: 'Снаряжение', items: ['flashlight', 'vest', 'vesthelm'] },
     { name: 'Патроны', items: ['ammo_p', 'ammo_s'] },
-  ] },
-  { name: 'Ещё оружие', cats: [
-    { name: 'Пистолеты', items: ['makarov', 'm1911', 'g18'] },
-    { name: 'Двойные', items: ['dual_glock', 'dual_mac10'] },
-    { name: 'ПП', items: ['mac10', 'bizon', 'thompson'] },
-    { name: 'Дробовики', items: ['nova', 'saiga'] },
-    { name: 'Винтовки', items: ['ak74', 'm4a1s'] },
-    { name: 'Снайперские', items: ['mosin', 'g3sg1'] },
-    { name: 'Пулемёты', items: ['negev'] },
-    { name: 'Патроны', items: ['ammo_p', 'ammo_s', 'ammo_gl'] },
   ] },
   { name: 'Экзотика', cats: [
     { name: 'Пусковые', items: ['rpg', 'm4gl', 'flare'] },
@@ -7028,7 +7084,7 @@ UI.renderBuy = function () {
       const bars = STAT_BARS[id] ? `<div class="bars"><span>урон</span><s><i style="width:${Math.min(100, STAT_BARS[id][0] / 1.15)}%"></i></s><span>темп</span><s><i style="width:${STAT_BARS[id][1]}%"></i></s><span>точн.</span><s><i style="width:${STAT_BARS[id][2]}%"></i></s></div>` : '';
       const note = st === 'team' ? (team === 'T' ? 'только террористы' : 'только спецназ') : st === 'own' ? (g && (g.ammo || g.glAmmo) ? 'полный запас' : 'уже есть') : st === 'nogun' ? 'нужен автомат или ПП' : st === 'noweapon' ? 'нет оружия' : st === 'dual' ? 'нельзя с двойными' : st === 'light' ? 'нельзя с фонариком' : '';
       const tag = d && d.toy ? '<em class="toy">игрушка</em>' : d && d.dual ? '<em class="dual">×2</em>' : id === 'flashlight' ? '<em class="toy">в руку</em>' : '';
-      return `<button class="bi ${st === 'ok' ? '' : st === 'own' ? 'own' : 'no'}" data-id="${id}"><div class="n">${g && (g.ammo || g.glAmmo) ? ammoLabel(p, id) : (g || d).name}<i>${ci + 1}·${ii + 1}</i></div><div class="p">${note || '$' + price}${tag}</div>${bars}</button>`;
+      return `<button class="bi ${st === 'ok' ? '' : st === 'own' ? 'own' : 'no'}" data-id="${id}"><div class="n">${g && (g.ammo || g.glAmmo) ? ammoLabel(p, id) : (g || d).name}<i>${ci + 1}·${ii === 9 ? 0 : ii + 1}</i></div><div class="p">${note || '$' + price}${tag}</div>${bars}</button>`;
     }).join('');
     return `<div class="buy-col" style="${this.buyCat === ci ? 'outline:1px solid var(--signal);outline-offset:4px' : ''}"><h4><kbd>${ci + 1}</kbd>${cat.name}</h4>${items}</div>`;
   }).join('');
@@ -7037,6 +7093,7 @@ UI.renderBuy = function () {
 };
 addEventListener('keydown', (e) => {
   if (!UI.buyOpen) return;
+  if (e.code === 'Digit0' && UI.buyCat !== null) { UI.buyKey(10); e.preventDefault(); return; }
   if (e.code === 'ArrowRight' || e.code === 'KeyE' || e.code === 'PageDown') { UI.buyFlip(1); e.preventDefault(); }
   else if (e.code === 'ArrowLeft' || e.code === 'KeyQ' || e.code === 'PageUp') { UI.buyFlip(-1); e.preventDefault(); }
 });
@@ -7050,6 +7107,19 @@ addEventListener('keydown', (e) => {
     const p = Game.player, w = p && p.weapon, on = !!(p && p.alive && p.ads && w && w.def.optic && (VM.adsK || 0) > 0.8 && Game.viewTarget() === p);
     el.classList.toggle('on', on); if (VM.cur && w && w.def.optic) VM.cur.group.visible = !on;
   };
+}
+
+// ------------------------------------------------------------ keep the sound alive
+setInterval(() => { try { Sound.heal(); } catch (e) { /* no audio */ } }, 1000);
+for (const ev of ['pointerdown', 'touchstart', 'keydown', 'focus']) addEventListener(ev, () => { if (Sound.ctx && Sound.ctx.state !== 'running') Sound.heal(); }, { passive: true, capture: true });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(() => Sound.heal(), 50); });
+
+// ------------------------------------------------------------ phone vibration: own shots, hits, getting hurt
+{
+  const hm = HUD.hitMarker, df = HUD.damageFrom, ta = tryAttack;
+  HUD.hitMarker = function (head, kill) { if (Touch.on) Touch.vibe(kill ? 45 : head ? 30 : 18); return hm.call(this, head, kill); };
+  HUD.damageFrom = function (pos) { if (Touch.on) Touch.vibe(60); return df.call(this, pos); };
+  tryAttack = function (a, heavy = false) { const r = ta(a, heavy); if (r && Touch.on && a === Game.player) { const k = a.weapon && a.weapon.def.kind; Touch.vibe(k === 'sniper' || k === 'shotgun' || k === 'launcher' ? 30 : 8); } return r; };
 }
 
 // =====================================================================
@@ -7116,8 +7186,8 @@ function render() {
   if (Game.state === 'playing' && p && ((p.alive && !p.scoped) || (Killcam.active && Killcam.vmWeapon)) && VM.cur && VM.cur.group.visible) { renderer.clearDepth(); renderer.render(vmScene, vmCamera); }
 }
 // handle for automated checks and tinkering from the console
-window.__su = (a) => surfaceUnder(a); window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); Env.update(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Profile, Skins, Killcam, Secret, Rockets, Env, BR, Destr, Climb, Proj, Touch, Post, MAP: () => MAP, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, get camera() { return camera; }, get renderer() { return renderer; } };
+window.__su = (a) => surfaceUnder(a); window.__AS = { fire: (a) => tryAttack(a), render: () => render(), step(dt) { Game.update(dt); FX.update(dt); Game.updateCamera(dt); Killcam.update(dt); Env.update(dt); const p = Game.player; if (p && p.alive) VM.update(dt, p); HUD.update(dt); }, get scene() { return scene; }, get vmScene() { return vmScene; }, get vmCamera() { return vmCamera; }, Game, World, Input, Profile, Skins, Killcam, Secret, Rockets, Env, BR, Destr, Climb, Proj, Touch, Post, MAP: () => MAP, Settings, THREE, FX, Nav, VM, HUD, UI, WEAPONS, Sound, get camera() { return camera; }, get renderer() { return renderer; } };
 boot();
 </script>
-
-</body></html>
+</body>
+</html>
