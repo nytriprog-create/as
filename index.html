@@ -299,6 +299,7 @@ kbd{display:inline-block;min-width:26px;text-align:center;padding:3px 7px;border
 .cs-empty{color:var(--muted);font-size:13px;padding:20px 0}
 #caseOpen{position:fixed;inset:0;z-index:60;background:rgba(5,6,8,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
 #caseOpen.hidden{display:none}
+#caseOpen>*:not(.co-rays){position:relative;z-index:1}
 #caseOpen h3{font:400 28px var(--f-display);margin:0;letter-spacing:.04em}
 .co-win{position:relative;width:min(900px,96vw);height:150px;overflow:hidden;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.03)}
 .co-win:before,.co-win:after{content:"";position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
@@ -7317,7 +7318,11 @@ const CASES = {
   neon: { name: 'Неоновый кейс', price: 250, col: ['#3a1670', '#16d6ff'], w: [38, 34, 19, 7, 2] },
   blade: { name: 'Ножевой кейс', price: 600, col: ['#5a3a10', '#e4ae39'], w: [0, 30, 30, 20, 20] },
 };
-const CODES = { nytri: 1000, prog: 1000, awdrgy: 1000 };
+const CODES = {
+  nytri: 1000, prog: 1000, awdrgy: 1000,
+  headshot: 1000, dune: 500, frost: 500, ace: 1500, clutch: 1500, 'rush-b': 1000, defuse: 750, nightowl: 1000, stealth: 1200,
+  'x7#bfly!q9z@lm4$vortex': 'butterfly', // the hard one: a random butterfly knife
+};
 const Cases = {
   tab: 'cases', sel: null, busy: false,
   equipped(wid) { const id = Profile.data.equip[wid]; return id ? Profile.data.inv.find((i) => i.id === id) : null; },
@@ -7367,14 +7372,21 @@ const Cases = {
   renderCodes(body) { // secret codes: each one pays out once
     const D = Profile.data; D.codes = D.codes || [];
     body.insertAdjacentHTML('beforeend', `<p class="sub">Знаешь секретный код? Введи его — получишь ◆. Каждый код срабатывает один раз.</p>
-      <div class="cs-code"><input id="csCode" maxlength="20" placeholder="введи код" autocomplete="off" spellcheck="false"><button id="csCodeGo">Активировать</button></div><div class="cs-msg" id="csMsg"></div>
+      <div class="cs-code"><input id="csCode" maxlength="40" placeholder="введи код" autocomplete="off" spellcheck="false"><button id="csCodeGo">Активировать</button></div><div class="cs-msg" id="csMsg"></div>
       <p class="sub" style="margin-top:14px">Активировано кодов: <b style="color:var(--signal2)">${D.codes.length} из ${Object.keys(CODES).length}</b></p>`);
     const go = () => {
       const v = $('csCode').value.trim().toLowerCase(), m = $('csMsg'), reward = CODES[v];
       if (!v) return;
       if (!reward) { m.style.color = '#eb4b4b'; m.textContent = 'Такого кода нет.'; Sound.ui('deny'); return; }
       if (D.codes.includes(v)) { m.style.color = '#e4ae39'; m.textContent = 'Этот код уже активирован.'; Sound.ui('deny'); return; }
-      D.codes.push(v); D.coins += reward; Profile.save(); Sound.ui('buy'); this.render();
+      D.codes.push(v);
+      if (reward === 'butterfly') { // a knife instead of coins, shown with the case reveal
+        Profile.save(); const it = { w: 'k_butterfly', s: choice(KNIFE_FINISH), r: 4, wear: +(Math.random() * 0.4).toFixed(4), st: Math.random() < 0.5 ? 0 : undefined, id: D.nextId++ };
+        let ov = $('caseOpen'); if (!ov) { ov = document.createElement('div'); ov.id = 'caseOpen'; document.body.appendChild(ov); }
+        ov.className = ''; ov.innerHTML = `<div class="co-rays"></div><h3>Секретный код!</h3><div class="co-reveal"></div><div class="cs-act" id="coAct"></div>`;
+        $('csMsg').textContent = ''; this.busy = true; this.reveal(it, ov); return;
+      }
+      D.coins += reward; Profile.save(); Sound.ui('buy'); this.render();
       const m2 = $('csMsg'); m2.style.color = '#7fd8ff'; m2.textContent = `Код принят: +${reward} ◆`;
     };
     $('csCodeGo').addEventListener('click', go); $('csCode').addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') go(); });
